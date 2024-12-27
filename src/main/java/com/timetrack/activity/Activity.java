@@ -1,0 +1,106 @@
+package com.timetrack.activity;
+
+import com.timetrack.activitySession.ActivitySession;
+import com.timetrack.category.Category;
+import jakarta.persistence.*;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+
+@Entity
+public class Activity {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String name;
+    private String description;
+
+    @OneToMany(mappedBy = "activity", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ActivitySession> sessions;
+
+    @ManyToOne(cascade = CascadeType.PERSIST)
+    private Category category;
+    private ActivityType activityType;
+    private LocalDateTime time;
+
+
+    public Activity(Long id, String name, String description, ActivityType activityType) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+        this.activityType = activityType;
+    }
+
+    public Activity() {
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public ActivityType getActivityType() {
+        return activityType;
+    }
+
+    public void setActivityType(ActivityType activityType) {
+        this.activityType = activityType;
+    }
+
+    public List<ActivitySession> getSessions() {
+        return sessions;
+    }
+
+    public void setSessions(List<ActivitySession> sessions) {
+        this.sessions = sessions;
+    }
+
+    public Category getCategory() {
+        return category;
+    }
+
+    public void setCategory(Category category) {
+        this.category = category;
+    }
+
+    public LocalDateTime getTime() {
+        return time;
+    }
+
+    public void setTime(LocalDateTime time) {
+        this.time = time;
+    }
+
+    @Override
+    public String toString() {
+        return "Activity{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", description='" + description + '\'' +
+                //", category=" + category +
+                ", activityType=" + activityType +
+                //", time=" + time +
+                '}';
+    }
+}
