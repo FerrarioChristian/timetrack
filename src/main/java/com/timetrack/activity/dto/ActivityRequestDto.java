@@ -39,4 +39,14 @@ public class ActivityRequestDto {
     public void setActivityType(ActivityType activityType) {
         this.activityType = activityType;
     }
+
+    @Override
+    public String toString() {
+        return "ActivityRequestDto{" +
+                "name='" + name + '\'' +
+                ", description='" + description + '\'' +
+                ", categoryName='" + categoryName + '\'' +
+                ", activityType=" + activityType +
+                '}';
+    }
 }

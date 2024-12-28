@@ -40,9 +40,7 @@ public class CategoryServiceImpl implements CategoryService{
         }
 
         return categoryRepository.findByName(categoryName).orElseGet(() -> {
-            Category newCategory = new Category();
-            newCategory.setName(categoryName);
-            return categoryRepository.save(newCategory);
+           return categoryRepository.findByName(categoryName).orElseGet(() -> categoryRepository.save(new Category(categoryName)));
         });
     }
 }

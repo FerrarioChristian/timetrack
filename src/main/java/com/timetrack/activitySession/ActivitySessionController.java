@@ -1,10 +1,11 @@
 package com.timetrack.activitySession;
 
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Duration;
 
-@RestController
+@Controller
 @RequestMapping("/sessions")
 public class ActivitySessionController {
     private final ActivitySessionService activitySessionService;
@@ -14,13 +15,15 @@ public class ActivitySessionController {
     }
 
     @PostMapping("/{activityId}/start")
-    public ActivitySession startSession(@PathVariable Long activityId) {
-        return activitySessionService.startSession(activityId);
+    public String startSession(@PathVariable Long activityId) {
+        activitySessionService.startSession(activityId);
+        return "redirect:/";
     }
 
-    @PostMapping("/{sessionId}/stop")
-    public ActivitySession stopSession(@PathVariable Long sessionId) {
-        return activitySessionService.stopSession(sessionId);
+    @PostMapping("/{activityId}/stop")
+    public String stopSession(@PathVariable Long activityId) {
+        activitySessionService.stopSession(activityId);
+        return "redirect:/";
     }
 
     @GetMapping("/{activityId}/total-time")

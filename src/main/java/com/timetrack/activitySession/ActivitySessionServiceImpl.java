@@ -19,22 +19,25 @@ public class ActivitySessionServiceImpl implements ActivitySessionService {
     }
 
     @Override
-    public ActivitySession startSession(Long activityId) {
+    public void startSession(Long activityId) {
         Activity activity = activityRepository.findById(activityId).orElseThrow(() -> new IllegalArgumentException("Activity not found"));
-        ActivitySession session = new ActivitySession();
-        session.setActivity(activity);
-        session.setStartTime(LocalDateTime.now());
-        return activitySessionRepository.save(session);
+        boolean isAlreadyStarted = isSessionActive(activityId);
+        if (isAlreadyStarted) {
+            throw new IllegalArgumentException("Activity is already started");
+        } else {
+            ActivitySession session = new ActivitySession();
+            session.setActivity(activity);
+            session.setStartTime(LocalDateTime.now());
+            activitySessionRepository.save(session);
+        }
     }
 
     @Override
-    public ActivitySession stopSession(Long sessionId) {
-        ActivitySession session = activitySessionRepository.findById(sessionId).orElseThrow(() -> new IllegalArgumentException("Session not found"));
-        if(session.getEndTime() != null) {
-            throw new IllegalStateException("Session is already ended");
-        }
+    public void stopSession(Long activityId) {
+        ActivitySession session = activitySessionRepository.findByActivityIdAndEndTimeIsNull(activityId)
+                .orElseThrow(() -> new IllegalArgumentException("No active session found"));
         session.setEndTime(LocalDateTime.now());
-        return activitySessionRepository.save(session);
+        activitySessionRepository.save(session);
     }
 
     @Override
@@ -42,8 +45,11 @@ public class ActivitySessionServiceImpl implements ActivitySessionService {
         Activity activity = activityRepository.findById(activityId)
                 .orElseThrow(() -> new IllegalArgumentException("Activity not found"));
 
-        return activity.getSessions().stream()
-                .map(ActivitySession::getSessionDuration)
-                .reduce(Duration.ZERO, Duration::plus);
+        return null;
+    }
+
+    @Override
+    public boolean isSessionActive(Long activityId) {
+        return activitySessionRepository.findByActivityIdAndEndTimeIsNull(activityId).isPresent();
     }
 }
