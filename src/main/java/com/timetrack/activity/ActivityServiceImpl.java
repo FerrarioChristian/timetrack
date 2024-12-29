@@ -1,7 +1,7 @@
 package com.timetrack.activity;
 
 import com.timetrack.activity.dto.ActivityRequestDto;
-import com.timetrack.activity.dto.PatchActivityRequestDto;
+import com.timetrack.activity.dto.ActivityViewDto;
 import com.timetrack.category.Category;
 import com.timetrack.category.CategoryService;
 import org.springframework.stereotype.Service;
@@ -53,11 +53,5 @@ public class ActivityServiceImpl implements ActivityService {
     public void deleteActivity(Long id) {
         activityRepository.deleteById(id);
     }
-
-    @Override
-    public Activity patchActivity(Long id, PatchActivityRequestDto patchActivityRequest) {
-        return null;
-    }
-
 
 }

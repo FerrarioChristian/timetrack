@@ -1,6 +1,7 @@
 package com.timetrack.activity;
 
 import com.timetrack.activity.dto.ActivityRequestDto;
+import com.timetrack.activity.dto.ActivityViewDto;
 import com.timetrack.activitySession.ActivitySessionService;
 import com.timetrack.category.Category;
 import com.timetrack.category.CategoryService;
@@ -8,9 +9,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Controller
 @RequestMapping
@@ -29,21 +28,9 @@ public class ActivityController {
 
     @GetMapping("/")
     public String listActivities(Model model) {
-        List<Activity> activities = activityService.getAllActivities();
-        Map<Long, Boolean> activeSessions = new HashMap<>();
-
-        for (Activity activity : activities) {
-            boolean isSessionActive = activitySessionService.isSessionActive(activity.getId());
-            activeSessions.put(activity.getId(), isSessionActive);
-        }
-        model.addAttribute("activities", activityService.getAllActivities());
-        model.addAttribute("activeSessions", activeSessions);
+        List<ActivityViewDto> activities = activitySessionService.getAllActivitiesWithSessionStatus();
+        model.addAttribute("activities", activities);
         return "activity-list";
-    }
-
-    @GetMapping("/activities")
-    public List<Activity> getAllActivities(Model model) {
-        return activityService.getAllActivities();
     }
 
     @GetMapping("/activities/new")
@@ -63,6 +50,7 @@ public class ActivityController {
 
     @PostMapping("/activities")
     public String newActivity(@ModelAttribute("activity") ActivityRequestDto activityRequest) {
+        //TODO spostare logica in Service
         Category category = categoryService.getOrCreateCategory(activityRequest.getCategoryName());
         Activity activity = new Activity();
         activity.setName(activityRequest.getName());

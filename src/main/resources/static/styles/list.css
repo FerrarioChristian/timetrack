@@ -1,0 +1,35 @@
+.add-button {
+    margin-left: auto;
+}
+
+.empty-list {
+    text-align: center;
+    margin-top: 10rem;
+    font-size: large;
+}
+
+.activity {
+    background: #ffffff;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.activity-name {
+  margin: 0;
+}
+
+.activity-category {
+    color: steelblue;
+    margin:0;
+}
+
+.activity-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+}
