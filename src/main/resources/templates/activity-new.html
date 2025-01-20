@@ -3,35 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link th:href="@{/styles/main.css}" rel="stylesheet"/>
     <link th:href="@{/styles/new-edit.css}" rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link th:href="@{/styles/main.css}" rel="stylesheet"/>
     <title>Time Tracker</title>
 </head>
 <body>
 <div class="container">
     <h1>Time Tracker</h1>
 
-    <form th:action="@{/activities}" th:object="${activity}" method="post">
-        <label for="name">Activity Name</label>
-        <input type="text" id="name" name="name" th:field="*{name}" placeholder="Activity name" required>
+    <form th:action="@{/activities}" th:object="${activity}" method="post" class="mt-4 flex flex-column gap-4">
+        <label for="name">Activity Name
+            <input type="text" id="name" name="name" th:field="*{name}" placeholder="Activity name" class="form-control">
+        </label>
 
-        <label for="description">Description</label>
-        <input type="text" id="description" name="description" th:field="*{description}" placeholder="Description">
+        <label for="description">Description
+            <input type="text" id="description" name="description" th:field="*{description}" placeholder="Description" class="form-control">
+        </label>
 
-        <label for="category">Category</label>
-        <input id="category" name="categoryName" list="categories" th:field="*{categoryName}"
-               placeholder="Select or add category">
-        <datalist id="categories">
-            <option th:each="category : ${categories}" th:value="${category.name}" th:text="${category.name}"></option>
-        </datalist>
+        <label for="time">Goal Time (hh:mm)
+            <input type="time" id="time" name="time" th:field="*{time}" class="form-control">
+        </label>
 
-        <label for="activityType">Type</label>
-        <select id="activityType" name="activityType" th:field="*{activityType}">
-            <option value="GOAL">Goal (Minimum Time)</option>
-            <option value="MAX_TIME">Max Time (Limit)</option>
-        </select>
+        <label for="category">Category
+            <input id="category" name="categoryName" list="categories" th:field="*{categoryName}"
+                   placeholder="Select or add category" class="form-control">
+            <datalist id="categories">
+                <option th:each="category : ${categories}" th:value="${category.name}"
+                        th:text="${category.name}"></option>
+            </datalist>
+        </label>
 
-        <button type="submit" class="green-btn">Add Activity</button>
+        <label for="activityType">Type
+            <select id="activityType" name="activityType" th:field="*{activityType}" class="form-select">
+                <option value="GOAL">Goal (Minimum Time)</option>
+                <option value="MAX_TIME">Max Time (Limit)</option>
+            </select>
+        </label>
+
+        <p th:if="${#fields.hasErrors('name')}" class="text-danger m-0" th:errors="*{name}"></p>
+
+        <div class="flex gap-3">
+            <button type="submit" class="btn btn-success">Save Changes</button>
+            <a th:href="@{'/'}" class="btn btn-danger">Cancel</a>
+        </div>
     </form>
 </div>
 </body>
