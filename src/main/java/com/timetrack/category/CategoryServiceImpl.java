@@ -36,11 +36,9 @@ public class CategoryServiceImpl implements CategoryService{
     @Override
     public Category getOrCreateCategory(String categoryName) {
         if (categoryName == null || categoryName.trim().isEmpty()) {
-            throw new IllegalArgumentException("Il nome della categoria non può essere vuoto");
+            return null;
         }
 
-        return categoryRepository.findByName(categoryName).orElseGet(() -> {
-           return categoryRepository.findByName(categoryName).orElseGet(() -> categoryRepository.save(new Category(categoryName)));
-        });
+        return categoryRepository.findByName(categoryName).orElseGet(() -> categoryRepository.findByName(categoryName).orElseGet(() -> categoryRepository.save(new Category(categoryName))));
     }
 }

@@ -2,6 +2,7 @@ package com.timetrack.activity.dto;
 
 import com.timetrack.activity.ActivityType;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 
 public class ActivityViewDto extends BaseActivityDto {
@@ -9,13 +10,19 @@ public class ActivityViewDto extends BaseActivityDto {
     private boolean isSessionActive;
     private LocalDateTime sessionStartTime;
 
-    public ActivityViewDto(Long id, String name, String description, String categoryName, ActivityType activityType, boolean isSessionActive, LocalDateTime sessionStartTime) {
-        super(name, description, categoryName, activityType);
+    public ActivityViewDto(Long id, String name, String description, Duration time , String categoryName, ActivityType activityType, boolean isSessionActive, LocalDateTime sessionStartTime) {
+        super(name, description, time, categoryName, activityType);
         this.id = id;
         this.isSessionActive = isSessionActive;
         this.sessionStartTime = sessionStartTime;
     }
 
+    public String getTimeString() {
+        if (getTime() == null) {
+            return "";
+        }
+        return getTime().toHoursPart() + ":" + getTime().toMinutesPart();
+    }
 
     public Long getId() {
         return id;
