@@ -30,8 +30,15 @@ public class ActivityServiceImpl implements ActivityService {
     }
 
     @Override
-    public Activity addActivity(Activity activity) {
-        return activityRepository.save(activity);
+    public Activity addActivity(ActivityRequestDto activityRequest) {
+        Activity newActivity = new Activity();
+        newActivity.setName(activityRequest.getName());
+        newActivity.setDescription(activityRequest.getDescription());
+        newActivity.setTime(activityRequest.getTime());
+        newActivity.setActivityType(activityRequest.getActivityType());
+        Category category = categoryService.getOrCreateCategory(activityRequest.getCategoryName());
+        newActivity.setCategory(category);
+        return activityRepository.save(newActivity);
     }
 
     @Override
@@ -39,9 +46,8 @@ public class ActivityServiceImpl implements ActivityService {
         Activity activity = activityRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Activity not found"));
         activity.setName(updatedActivity.getName());
         activity.setDescription(updatedActivity.getDescription());
+        activity.setTime(updatedActivity.getTime());
         activity.setActivityType(updatedActivity.getActivityType());
-
-        System.out.println(updatedActivity);
 
         Category category = categoryService.getOrCreateCategory(updatedActivity.getCategoryName());
         activity.setCategory(category);

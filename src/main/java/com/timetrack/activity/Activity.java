@@ -3,8 +3,9 @@ package com.timetrack.activity;
 import com.timetrack.activitySession.ActivitySession;
 import com.timetrack.category.Category;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotEmpty;
 
-import java.time.LocalDateTime;
+import java.time.Duration;
 import java.util.List;
 
 
@@ -14,6 +15,7 @@ public class Activity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotEmpty(message = "Il nome della attivitá non puó essere vuoto.")
     private String name;
     private String description;
 
@@ -23,7 +25,7 @@ public class Activity {
     @ManyToOne(cascade = CascadeType.PERSIST)
     private Category category;
     private ActivityType activityType;
-    private LocalDateTime time;
+    private Duration time;
 
 
     public Activity(Long id, String name, String description, ActivityType activityType) {
@@ -84,11 +86,11 @@ public class Activity {
         this.category = category;
     }
 
-    public LocalDateTime getTime() {
+    public Duration getTime() {
         return time;
     }
 
-    public void setTime(LocalDateTime time) {
+    public void setTime(Duration time) {
         this.time = time;
     }
 
@@ -98,9 +100,9 @@ public class Activity {
                 "id=" + id +
                 ", name='" + name + '\'' +
                 ", description='" + description + '\'' +
-                //", category=" + category +
+                ", category=" + category +
                 ", activityType=" + activityType +
-                //", time=" + time +
+                ", time=" + time +
                 '}';
     }
 }

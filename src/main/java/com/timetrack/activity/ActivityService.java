@@ -9,7 +9,7 @@ import java.util.Optional;
 public interface ActivityService {
     List<Activity> getAllActivities();
     Optional<Activity> getActivity(Long id);
-    Activity addActivity(Activity activity);
+    Activity addActivity(ActivityRequestDto activity);
     Activity updateActivity(Long id, ActivityRequestDto updatedActivity);
     void deleteActivity(Long id);
 }

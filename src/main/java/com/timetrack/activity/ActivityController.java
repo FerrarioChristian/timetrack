@@ -3,10 +3,11 @@ package com.timetrack.activity;
 import com.timetrack.activity.dto.ActivityRequestDto;
 import com.timetrack.activity.dto.ActivityViewDto;
 import com.timetrack.activitySession.ActivitySessionService;
-import com.timetrack.category.Category;
 import com.timetrack.category.CategoryService;
+import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -49,24 +50,17 @@ public class ActivityController {
     }
 
     @PostMapping("/activities")
-    public String newActivity(@ModelAttribute("activity") ActivityRequestDto activityRequest) {
-        //TODO spostare logica in Service
-        Category category = categoryService.getOrCreateCategory(activityRequest.getCategoryName());
-        Activity activity = new Activity();
-        activity.setName(activityRequest.getName());
-        activity.setDescription(activityRequest.getDescription());
-        activity.setActivityType(activityRequest.getActivityType());
-        activity.setCategory(category);
-
-        activityService.addActivity(activity);
-
+    public String newActivity(@Valid @ModelAttribute("activity") ActivityRequestDto activityRequest, BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
+            return "activity-new";
+        }
+        activityService.addActivity(activityRequest);
         return "redirect:/";
     }
 
     @PutMapping("/activities/{id}")
     public String updateActivity(@ModelAttribute ActivityRequestDto updatedActivity, @PathVariable Long id) {
         Activity newActivity = activityService.updateActivity(id, updatedActivity);
-        //return "redirect:/activities/" + newActivity.getId();
         return "redirect:/";
     }
 
