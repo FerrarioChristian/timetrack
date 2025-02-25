@@ -1,6 +1,7 @@
-package com.timetrack;
+package com.timetrack.converter;
 
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
@@ -8,9 +9,9 @@ import java.time.Duration;
 @Component
 public class StringToDurationConverter implements Converter<String, Duration> {
     @Override
-    public Duration convert(String source) {
+    public Duration convert(@Nullable String source) {
         try {
-            if (source.isEmpty()) {
+            if (source == null || source.isEmpty()) {
                 return null;
             }
             String[] parts = source.split(":");
