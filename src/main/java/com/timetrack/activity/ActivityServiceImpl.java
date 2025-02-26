@@ -1,7 +1,6 @@
 package com.timetrack.activity;
 
 import com.timetrack.activity.dto.ActivityRequestDto;
-import com.timetrack.activity.dto.ActivityViewDto;
 import com.timetrack.category.Category;
 import com.timetrack.category.CategoryService;
 import org.springframework.stereotype.Service;
@@ -32,18 +31,16 @@ public class ActivityServiceImpl implements ActivityService {
     @Override
     public Activity addActivity(ActivityRequestDto activityRequest) {
         Activity newActivity = new Activity();
-        newActivity.setName(activityRequest.getName());
-        newActivity.setDescription(activityRequest.getDescription());
-        newActivity.setTime(activityRequest.getTime());
-        newActivity.setActivityType(activityRequest.getActivityType());
-        Category category = categoryService.getOrCreateCategory(activityRequest.getCategoryName());
-        newActivity.setCategory(category);
-        return activityRepository.save(newActivity);
+        return saveActivity(activityRequest, newActivity);
     }
 
     @Override
     public Activity updateActivity(Long id, ActivityRequestDto updatedActivity) {
         Activity activity = activityRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Activity not found"));
+        return saveActivity(updatedActivity, activity);
+    }
+
+    private Activity saveActivity(ActivityRequestDto updatedActivity, Activity activity) {
         activity.setName(updatedActivity.getName());
         activity.setDescription(updatedActivity.getDescription());
         activity.setTime(updatedActivity.getTime());

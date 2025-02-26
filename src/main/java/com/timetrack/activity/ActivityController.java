@@ -60,7 +60,7 @@ public class ActivityController {
     }
 
     @GetMapping("/activities/{id}")
-    public String activityDetails(@PathVariable Long id, Model model) {
+    public String activityDetails(Model model, @PathVariable Long id) {
         Activity activity = activityService.getActivity(id).orElseThrow(() -> new IllegalArgumentException("Activity not found"));
         List<ActivitySession> sessions = activitySessionService.getActivitySessionsByActivityId(id).orElseThrow(() -> new IllegalArgumentException("Session not found"));
         model.addAttribute("activity", activity);
@@ -71,7 +71,7 @@ public class ActivityController {
 
     @PutMapping("/activities/{id}")
     public String updateActivity(@ModelAttribute ActivityRequestDto updatedActivity, @PathVariable Long id) {
-        Activity newActivity = activityService.updateActivity(id, updatedActivity);
+        activityService.updateActivity(id, updatedActivity);
         return "redirect:/";
     }
 

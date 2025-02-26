@@ -19,7 +19,7 @@ public class ActivitySession {
     private LocalDateTime startTime;
     private LocalDateTime endTime;
 
-    public Duration getSessionDuration() {
+    public Duration getDuration() {
         if (startTime != null && endTime != null) {
             return Duration.between(startTime, endTime);
         }
