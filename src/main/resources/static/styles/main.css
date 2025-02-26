@@ -58,3 +58,7 @@ a {
 .red-btn:hover {
     background-color: #e33225;
 }
+
+.ml-auto {
+    margin-left: auto;
+}

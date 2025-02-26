@@ -18,6 +18,10 @@
     align-items: center;
 }
 
+.activity:hover {
+    background: #f4f4f4;
+}
+
 .activity-name {
   margin: 0;
 }

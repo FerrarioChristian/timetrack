@@ -19,11 +19,20 @@
         </label>
 
         <label for="description">Description
-            <input type="text" id="description" name="description" th:field="*{description}" class="form-control">
+            <input type="text" id="description" name="description" placeholder="Description" th:field="*{description}" class="form-control">
         </label>
 
         <label for="time">Goal Time (hh:mm)
-            <input type="time" id="time" name="time" th:field="*{time}" class="form-control">
+            <input type="time" id="time" name="time" th:field="*{time}" class="form-control" onclick="this.showPicker()">
+        </label>
+
+        <label for="categoryName">Category
+            <input id="categoryName" name="categoryName" list="categories" th:value="*{category?.name}"
+                   placeholder="Select or add category" class="form-control">
+            <datalist id="categories">
+                <option th:each="category : ${categories}" th:value="${category.name}" th:text="${category.name}">
+                </option>
+            </datalist>
         </label>
 
         <label for="activityType">Type
@@ -33,14 +42,6 @@
             </select>
         </label>
 
-        <label for="categoryName">Category
-            <input id="categoryName" name="categoryName" list="categories" th:value="*{category.name}"
-                   placeholder="Select or add category" class="form-control">
-            <datalist id="categories">
-                <option th:each="category : ${categories}" th:value="${category.name}" th:text="${category.name}">
-                </option>
-            </datalist>
-        </label>
 
         <div class="flex gap-3">
             <button type="submit" class="btn btn-success">Save Changes</button>

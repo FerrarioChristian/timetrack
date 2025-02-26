@@ -2,6 +2,7 @@ package com.timetrack.activity;
 
 import com.timetrack.activity.dto.ActivityRequestDto;
 import com.timetrack.activity.dto.ActivityViewDto;
+import com.timetrack.activitySession.ActivitySession;
 import com.timetrack.activitySession.ActivitySessionService;
 import com.timetrack.category.CategoryService;
 import jakarta.validation.Valid;
@@ -56,6 +57,16 @@ public class ActivityController {
         }
         activityService.addActivity(activityRequest);
         return "redirect:/";
+    }
+
+    @GetMapping("/activities/{id}")
+    public String activityDetails(@PathVariable Long id, Model model) {
+        Activity activity = activityService.getActivity(id).orElseThrow(() -> new IllegalArgumentException("Activity not found"));
+        List<ActivitySession> sessions = activitySessionService.getActivitySessionsByActivityId(id).orElseThrow(() -> new IllegalArgumentException("Session not found"));
+        model.addAttribute("activity", activity);
+        model.addAttribute("categories", categoryService.getAllCategories());
+        model.addAttribute("sessions", sessions);
+        return "activity-details";
     }
 
     @PutMapping("/activities/{id}")
