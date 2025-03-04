@@ -45,8 +45,8 @@
 
     <div th:each="activity : ${activities}" class="activity" th:attr="onclick=|window.location.href='/activities/${activity.id}'|" style="cursor: pointer;">
             <div class="activity-info-container">
-                <h4 th:text="${activity.name}" class="activity-name"></h4>
-                <p th:text="${activity.categoryName}" class="activity-category"></p>
+                <h4 th:text="${activity.name}" class="activity-name lh-1"></h4>
+                <p th:text="${activity.categoryName}" class="activity-category lh-1"></p>
             </div>
             <div th:if="${activity.isSessionActive}" th:attr="data-start-time=${activity.sessionStartTime}">
                 <span id="timer-[[${activityView.activity.id}]]"></span>

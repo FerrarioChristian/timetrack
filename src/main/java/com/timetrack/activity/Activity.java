@@ -2,6 +2,7 @@ package com.timetrack.activity;
 
 import com.timetrack.activitySession.ActivitySession;
 import com.timetrack.category.Category;
+import com.timetrack.converter.DurationToStringConverter;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 
@@ -92,6 +93,10 @@ public class Activity {
 
     public void setTime(Duration time) {
         this.time = time;
+    }
+
+    public String getTimeString() {
+        return new DurationToStringConverter().convert(time);
     }
 
     @Override

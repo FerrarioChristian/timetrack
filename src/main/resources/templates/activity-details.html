@@ -14,8 +14,8 @@
     <div class="container">
             <form th:action="@{'/activities/' + ${activity.id}}" th:object="${activity}" th:method="post" class="mb-4">
                 <p><strong>Description:</strong> <span th:text="*{description}"></span></p>
-                <p><strong>Category:</strong> <span th:text="*{category?.name}"></span></p>
-                <p><strong>Goal Time:</strong> <span th:text="*{activity.time}"></span></p>
+                <p><strong>Category:</strong> <span th:text="${activity.category != null ? activity.category.name : 'Not set'}"></span></p>
+                <p><strong>Goal Time:</strong> <span th:text="${activity.time != null ? activity.getTimeString() : 'Not set'} "></span></p>
                 <p><strong>Type:</strong> <span th:text="${activity.activityType}"></span></p>
                 <div class="flex">
                     <a th:href="@{'/'}" class="btn btn-secondary me-2">Back</a>
@@ -38,7 +38,7 @@
                 <tr th:each="activitySession : ${sessions}">
                     <td th:text="${#temporals.format(activitySession.startTime, 'dd/MM/yyyy HH:mm:ss')}"></td>
                     <td th:text="${activitySession.endTime != null ? #temporals.format(activitySession.endTime, 'dd/MM/yyyy HH:mm:ss') : 'Ongoing'}"></td>
-                    <td th:text="${activitySession.duration != null ? activitySession.duration : 'In progress'}"></td>
+                    <td th:text="${activitySession.duration != null ? activitySession.getDurationString() : 'In progress'}"></td>
                 </tr>
             </tbody>
         </table>
