@@ -35,6 +35,11 @@
 <body>
 <div class="container flex flex-column">
     <h1>Activities</h1>
+
+    <form th:action="@{/logout}" method="post">
+        <button type="submit">Logout</button>
+    </form>
+
     <div class="flex">
         <a th:href="@{/activities/new}" class="btn btn-primary">&#xFF0B Track activity</a>
     </div>
