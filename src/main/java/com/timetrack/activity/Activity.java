@@ -21,6 +21,7 @@ public class Activity {
     private String description;
 
     @OneToMany(mappedBy = "activity", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("startTime desc")
     private List<ActivitySession> sessions;
 
     @ManyToOne(cascade = CascadeType.PERSIST)

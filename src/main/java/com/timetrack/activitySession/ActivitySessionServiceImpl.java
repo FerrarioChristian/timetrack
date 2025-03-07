@@ -76,11 +76,4 @@ public class ActivitySessionServiceImpl implements ActivitySessionService {
                 })
                 .collect(Collectors.toList());
     }
-
-    @Override
-    public Optional<List<ActivitySession>> getActivitySessionsByActivityId(Long activityId) {
-       return activitySessionRepository.findByActivityId(activityId);
-    }
-
-
 }

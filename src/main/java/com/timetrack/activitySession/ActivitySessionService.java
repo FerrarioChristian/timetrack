@@ -13,5 +13,4 @@ public interface ActivitySessionService {
     boolean isSessionActive(Long activityId);
     Optional<ActivitySession> getActiveSession(Long activityId);
     List<ActivityViewDto> getAllActivitiesWithSessionStatus();
-    Optional<List<ActivitySession>> getActivitySessionsByActivityId(Long activityId);
 }
