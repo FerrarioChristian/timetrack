@@ -80,10 +80,6 @@ public class Activity {
         return sessions;
     }
 
-    public void setSessions(List<ActivitySession> sessions) {
-        this.sessions = sessions;
-    }
-
     public Category getCategory() {
         return category;
     }

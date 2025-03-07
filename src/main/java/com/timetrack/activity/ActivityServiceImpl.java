@@ -8,7 +8,6 @@ import com.timetrack.category.Category;
 import com.timetrack.category.CategoryService;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -21,11 +20,6 @@ public class ActivityServiceImpl implements ActivityService {
         this.activityRepository = activityRepository;
         this.categoryService = categoryService;
         this.userRepository = userRepository;
-    }
-
-    @Override
-    public List<Activity> getAllActivities() {
-        return activityRepository.findAll();
     }
 
     @Override
@@ -68,11 +62,7 @@ public class ActivityServiceImpl implements ActivityService {
 
     public boolean isOwner(Long activityId) {
         String username = SecurityUtil.getSessionUsername();
-        boolean exists = activityRepository.existsByIdAndCreatedBy_Username(activityId, username);
-
-        System.out.println("User: " + username + " | Activity ID: " + activityId + " | Exists: " + exists);
-
-        return exists;
+        return activityRepository.existsByIdAndCreatedBy_Username(activityId, username);
     }
 
 }

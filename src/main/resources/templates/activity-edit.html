@@ -27,7 +27,7 @@
 
         <label for="categoryName">Category
             <input id="categoryName" name="categoryName" list="categories" th:value="*{category?.name}"
-                   placeholder="Select or add category" class="form-control">
+                   placeholder="Select or add category" class="form-control" autocomplete="off">
             <datalist id="categories">
                 <option th:each="category : ${categories}" th:value="${category.name}" th:text="${category.name}">
                 </option>
