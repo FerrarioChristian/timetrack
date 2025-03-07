@@ -1,6 +1,7 @@
 package com.timetrack.activity.dto;
 
 import com.timetrack.activity.ActivityType;
+import com.timetrack.auth.User;
 import jakarta.validation.constraints.NotEmpty;
 
 import java.time.Duration;
@@ -12,13 +13,27 @@ public class BaseActivityDto {
     private Duration time;
     private String categoryName;
     private ActivityType activityType;
+    private User createdBy;
 
-    public BaseActivityDto(String name, String description, Duration time, String categoryName, ActivityType activityType) {
+    public BaseActivityDto(String name, String description, Duration time, String categoryName, ActivityType activityType, User createdBy) {
         this.name = name;
         this.description = description;
         this.time = time;
         this.categoryName = categoryName;
         this.activityType = activityType;
+        this.createdBy = createdBy;
+    }
+
+    public BaseActivityDto(String name, String description, Duration time, String categoryName, ActivityType activityType) {
+        this(name, description, time, categoryName, activityType, null);
+    }
+
+    public User getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(User createdBy) {
+        this.createdBy = createdBy;
     }
 
     public BaseActivityDto() {

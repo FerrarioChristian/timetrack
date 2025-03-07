@@ -1,6 +1,7 @@
 package com.timetrack.activity;
 
 import com.timetrack.activitySession.ActivitySession;
+import com.timetrack.auth.User;
 import com.timetrack.category.Category;
 import com.timetrack.converter.DurationToStringConverter;
 import jakarta.persistence.*;
@@ -16,9 +17,13 @@ public class Activity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotEmpty(message = "Il nome della attivitá non puó essere vuoto.")
+    @NotEmpty(message = "Activity name cannot be empty.")
     private String name;
     private String description;
+
+    @ManyToOne
+    @JoinColumn(name = "created_by", nullable = false)
+    private User createdBy;
 
     @OneToMany(mappedBy = "activity", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("startTime desc")
@@ -28,7 +33,6 @@ public class Activity {
     private Category category;
     private ActivityType activityType;
     private Duration time;
-
 
     public Activity(Long id, String name, String description, ActivityType activityType) {
         this.id = id;
@@ -100,15 +104,16 @@ public class Activity {
         return new DurationToStringConverter().convert(time);
     }
 
+    public User getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(User createdBy) {
+        this.createdBy = createdBy;
+    }
+
     @Override
     public String toString() {
-        return "Activity{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", description='" + description + '\'' +
-                ", category=" + category +
-                ", activityType=" + activityType +
-                ", time=" + time +
-                '}';
+        return "Activity{" + "id=" + id + ", name='" + name + '\'' + ", description='" + description + '\'' + ", category=" + category + ", activityType=" + activityType + ", time=" + time + '}';
     }
 }

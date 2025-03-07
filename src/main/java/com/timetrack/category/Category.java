@@ -1,6 +1,7 @@
 package com.timetrack.category;
 
 import com.timetrack.activity.Activity;
+import com.timetrack.auth.User;
 import jakarta.persistence.*;
 
 import java.util.List;
@@ -13,8 +14,28 @@ public class Category {
     @Column(nullable = false, unique = true)
     private String name;
 
+    @ManyToOne
+    @JoinColumn(name = "created_by", nullable = false)
+    private User createdBy;
+
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL)
     private List<Activity> activities;
+
+    public User getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(User createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public List<Activity> getActivities() {
+        return activities;
+    }
+
+    public void setActivities(List<Activity> activities) {
+        this.activities = activities;
+    }
 
     public Category() {
     }

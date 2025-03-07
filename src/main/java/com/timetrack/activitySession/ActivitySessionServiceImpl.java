@@ -4,6 +4,7 @@ import com.timetrack.activity.Activity;
 import com.timetrack.activity.ActivityMapper;
 import com.timetrack.activity.ActivityRepository;
 import com.timetrack.activity.dto.ActivityViewDto;
+import com.timetrack.auth.SecurityUtil;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -19,8 +20,7 @@ public class ActivitySessionServiceImpl implements ActivitySessionService {
     private final ActivityMapper activityMapper;
 
     public ActivitySessionServiceImpl(ActivitySessionRepository activitySessionRepository,
-                                      ActivityRepository activityRepository,
-                                      ActivityMapper activityMapper) {
+                                      ActivityRepository activityRepository, ActivityMapper activityMapper) {
         this.activitySessionRepository = activitySessionRepository;
         this.activityRepository = activityRepository;
         this.activityMapper = activityMapper;
@@ -28,7 +28,8 @@ public class ActivitySessionServiceImpl implements ActivitySessionService {
 
     @Override
     public void startSession(Long activityId) {
-        Activity activity = activityRepository.findById(activityId).orElseThrow(() -> new IllegalArgumentException("Activity not found"));
+        Activity activity = activityRepository.findById(activityId).orElseThrow(() -> new IllegalArgumentException(
+                "Activity not found"));
         if (isSessionActive(activityId)) {
             throw new IllegalArgumentException("Activity is already started");
         } else {
@@ -41,16 +42,17 @@ public class ActivitySessionServiceImpl implements ActivitySessionService {
 
     @Override
     public void stopSession(Long activityId) {
-        ActivitySession session = activitySessionRepository.findByActivityIdAndEndTimeIsNull(activityId)
-                .orElseThrow(() -> new IllegalArgumentException("No active session found"));
+        ActivitySession session =
+                activitySessionRepository.findByActivityIdAndEndTimeIsNull(activityId).orElseThrow(() -> new IllegalArgumentException("No active session found"));
         session.setEndTime(LocalDateTime.now());
         activitySessionRepository.save(session);
     }
 
     @Override
     public Duration getTotalTimeForActivity(Long activityId) {
-        Activity activity = activityRepository.findById(activityId)
-                .orElseThrow(() -> new IllegalArgumentException("Activity not found"));
+        //TODO tempo totale per ativita
+        Activity activity = activityRepository.findById(activityId).orElseThrow(() -> new IllegalArgumentException(
+                "Activity not found"));
         return null;
     }
 
@@ -66,14 +68,13 @@ public class ActivitySessionServiceImpl implements ActivitySessionService {
 
     @Override
     public List<ActivityViewDto> getAllActivitiesWithSessionStatus() {
-        List<Activity> activities = activityRepository.findAll();
-        return activities.stream()
-                .map(activity -> {
-                    Optional<ActivitySession> activeSession = getActiveSession(activity.getId());
-                    boolean isSessionActive = activeSession.isPresent();
-                    LocalDateTime sessionStartTime = isSessionActive ? activeSession.get().getStartTime() : null;
-                    return activityMapper.toActivityViewDto(activity, isSessionActive, sessionStartTime);
-                })
-                .collect(Collectors.toList());
+        List<Activity> activities = activityRepository.findByCreatedBy_Username(SecurityUtil.getSessionUsername());
+
+        return activities.stream().map(activity -> {
+            Optional<ActivitySession> activeSession = getActiveSession(activity.getId());
+            boolean isSessionActive = activeSession.isPresent();
+            LocalDateTime sessionStartTime = isSessionActive ? activeSession.get().getStartTime() : null;
+            return activityMapper.toActivityViewDto(activity, isSessionActive, sessionStartTime);
+        }).collect(Collectors.toList());
     }
 }
