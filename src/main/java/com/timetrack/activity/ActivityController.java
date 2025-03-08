@@ -5,6 +5,7 @@ import com.timetrack.activity.dto.ActivityViewDto;
 import com.timetrack.activitySession.ActivitySessionService;
 import com.timetrack.category.CategoryService;
 import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -19,8 +20,7 @@ public class ActivityController {
     private final CategoryService categoryService;
     private final ActivitySessionService activitySessionService;
 
-    public ActivityController(ActivityService activityService,
-                              CategoryService categoryService,
+    public ActivityController(ActivityService activityService, CategoryService categoryService,
                               ActivitySessionService activitySessionService) {
         this.activityService = activityService;
         this.categoryService = categoryService;
@@ -43,14 +43,16 @@ public class ActivityController {
 
     @GetMapping("/activities/{id}/edit")
     public String editActivityPage(Model model, @PathVariable Long id) {
-        Activity activity = activityService.getActivity(id).orElseThrow(() -> new IllegalArgumentException("Activity not found"));
+        Activity activity = activityService.getActivity(id).orElseThrow(() -> new IllegalArgumentException("Activity " +
+                "not found"));
         model.addAttribute("activity", activity);
         model.addAttribute("categories", categoryService.getAllCategories());
         return "activity-edit";
     }
 
     @PostMapping("/activities")
-    public String newActivity(@Valid @ModelAttribute("activity") ActivityRequestDto activityRequest, BindingResult bindingResult) {
+    public String newActivity(@Valid @ModelAttribute("activity") ActivityRequestDto activityRequest,
+                              BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
             return "activity-new";
         }
@@ -58,20 +60,24 @@ public class ActivityController {
         return "redirect:/";
     }
 
+    @PreAuthorize("@activityServiceImpl.isOwner(#id)")
     @GetMapping("/activities/{id}")
     public String activityDetails(Model model, @PathVariable Long id) {
-        Activity activity = activityService.getActivity(id).orElseThrow(() -> new IllegalArgumentException("Activity not found"));
+        Activity activity = activityService.getActivity(id).orElseThrow(() -> new IllegalArgumentException("Activity " +
+                "not found"));
         model.addAttribute("activity", activity);
         model.addAttribute("categories", categoryService.getAllCategories());
         return "activity-details";
     }
 
+    @PreAuthorize("@activityServiceImpl.isOwner(#id)")
     @PutMapping("/activities/{id}")
     public String updateActivity(@ModelAttribute ActivityRequestDto updatedActivity, @PathVariable Long id) {
         activityService.updateActivity(id, updatedActivity);
         return "redirect:/";
     }
 
+    @PreAuthorize("@activityServiceImpl.isOwner(#id)")
     @DeleteMapping("/activities/{id}")
     public String deleteActivity(@PathVariable Long id) {
         activityService.deleteActivity(id);

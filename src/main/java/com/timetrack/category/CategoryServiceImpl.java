@@ -1,23 +1,32 @@
 package com.timetrack.category;
 
+import com.timetrack.auth.SecurityUtil;
+import com.timetrack.auth.User;
+import com.timetrack.auth.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
-public class CategoryServiceImpl implements CategoryService{
+public class CategoryServiceImpl implements CategoryService {
     private final CategoryRepository categoryRepository;
+    private final UserRepository userRepository;
 
-    public CategoryServiceImpl(CategoryRepository categoryRepository) {
+    public CategoryServiceImpl(CategoryRepository categoryRepository, UserRepository userRepository) {
         this.categoryRepository = categoryRepository;
+        this.userRepository = userRepository;
     }
 
     @Override
     public List<Category> getAllCategories() {
-        return categoryRepository.findAll();
+        return categoryRepository.findByCreatedBy_Username(SecurityUtil.getSessionUsername());
     }
 
     public Category addCategory(Category category) {
+        String username = SecurityUtil.getSessionUsername();
+        User user = userRepository.findByUsername(username);
+        category.setCreatedBy(user);
+
         return categoryRepository.save(category);
     }
 
@@ -25,6 +34,11 @@ public class CategoryServiceImpl implements CategoryService{
     public Category updateCategory(Long id, Category newCategory) {
         Category category = categoryRepository.findById(id).orElseThrow();
         category.setName(newCategory.getName());
+        String username = SecurityUtil.getSessionUsername();
+
+        User user = userRepository.findByUsername(username);
+        category.setCreatedBy(user);
+
         return categoryRepository.save(category);
     }
 
@@ -39,6 +53,7 @@ public class CategoryServiceImpl implements CategoryService{
             return null;
         }
 
-        return categoryRepository.findByName(categoryName).orElseGet(() -> categoryRepository.findByName(categoryName).orElseGet(() -> categoryRepository.save(new Category(categoryName))));
+        return categoryRepository.findByName(categoryName)
+                .orElseGet(() -> addCategory(new Category(categoryName)));
     }
 }

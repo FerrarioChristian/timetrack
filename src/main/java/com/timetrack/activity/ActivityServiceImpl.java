@@ -1,26 +1,25 @@
 package com.timetrack.activity;
 
 import com.timetrack.activity.dto.ActivityRequestDto;
+import com.timetrack.auth.SecurityUtil;
+import com.timetrack.auth.User;
+import com.timetrack.auth.UserRepository;
 import com.timetrack.category.Category;
 import com.timetrack.category.CategoryService;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Optional;
 
 @Service
 public class ActivityServiceImpl implements ActivityService {
     private final ActivityRepository activityRepository;
     private final CategoryService categoryService;
+    private final UserRepository userRepository;
 
-    public ActivityServiceImpl(ActivityRepository activityRepository, CategoryService categoryService) {
+    public ActivityServiceImpl(ActivityRepository activityRepository, CategoryService categoryService, UserRepository userRepository) {
         this.activityRepository = activityRepository;
         this.categoryService = categoryService;
-    }
-
-    @Override
-    public List<Activity> getAllActivities() {
-        return activityRepository.findAll();
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -49,12 +48,21 @@ public class ActivityServiceImpl implements ActivityService {
         Category category = categoryService.getOrCreateCategory(updatedActivity.getCategoryName());
         activity.setCategory(category);
 
+        String username = SecurityUtil.getSessionUsername();
+        User user = userRepository.findByUsername(username);
+        activity.setCreatedBy(user);
+
         return activityRepository.save(activity);
     }
 
     @Override
     public void deleteActivity(Long id) {
         activityRepository.deleteById(id);
+    }
+
+    public boolean isOwner(Long activityId) {
+        String username = SecurityUtil.getSessionUsername();
+        return activityRepository.existsByIdAndCreatedBy_Username(activityId, username);
     }
 
 }
