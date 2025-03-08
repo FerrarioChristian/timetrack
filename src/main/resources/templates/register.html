@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link th:href="@{/styles/new-edit.css}" rel="stylesheet"/>
+    <link th:href="@{/styles/bootstrap.min.css}" rel="stylesheet"/>
+    <link th:href="@{/styles/main.css}" rel="stylesheet"/>
+    <title>Login - Time Tracker</title>
+</head>
+<body>
+<h1>Register</h1>
+<div class="container">
+    <form class="mt-4 flex flex-column gap-4 w-75 m-auto" th:action="@{/register}" method="post" th:object="${user}">
+        <label th:for="username">
+            Username
+            <input th:field="*{username}" placeholder="Username" class="form-control">
+        </label>
+        <label th:for="password">
+            Password
+            <input th:field="*{password}" type="password" placeholder="Password" class="form-control">
+        </label>
+
+        <p th:if="${param.error}" class="text-danger m-0" >User already exists.</p>
+
+        <button type="submit" class="btn btn-primary">Register</button>
+        <a th:href="@{'/login'}" class="btn btn-outline-primary">Login</a>
+    </form>
+</div>
+</body>
+</html>

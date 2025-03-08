@@ -1,13 +1,14 @@
 package com.timetrack.activity.dto;
 
 import com.timetrack.activity.ActivityType;
+import com.timetrack.auth.User;
 
 import java.time.Duration;
 
 public class ActivityRequestDto extends BaseActivityDto{
     private String timeString;
-    public ActivityRequestDto(String name, String description, String time, String categoryName, ActivityType activityType) {
-        super(name, description, Duration.parse(time), categoryName, activityType);
+    public ActivityRequestDto(String name, String description, String time, String categoryName, ActivityType activityType, User user) {
+        super(name, description, Duration.parse(time), categoryName, activityType, user);
     }
 
     public ActivityRequestDto() {

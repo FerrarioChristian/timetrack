@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link th:href="@{/styles/new-edit.css}" rel="stylesheet"/>
+    <link th:href="@{/styles/bootstrap.min.css}" rel="stylesheet"/>
+    <link th:href="@{/styles/main.css}" rel="stylesheet"/>
+    <title>Login - Time Tracker</title>
+</head>
+<body>
+    <h1>Login</h1>
+    <div class="container">
+        <form class="mt-4 flex flex-column gap-4 w-75 m-auto" th:action="@{/login}" method="post">
+            <label for="username">
+                Username
+                <input id="username" name="username" placeholder="Username" class="form-control">
+            </label>
+            <label for="password">
+                Password
+                <input id="password" type="password" name="password" placeholder="Password" class="form-control">
+            </label>
+
+            <p th:if="${param.error}" class="text-danger m-0" >Invalid credentials.</p>
+            <p th:if="${param.logout}" class="text-danger m-0" >You've been logged out.</p>
+
+            <button type="submit" class="btn btn-primary">Login</button>
+            <a th:href="@{'/register'}" class="btn btn-outline-primary">Register</a>
+        </form>
+    </div>
+</body>
+</html>
