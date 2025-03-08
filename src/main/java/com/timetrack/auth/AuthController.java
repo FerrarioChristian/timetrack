@@ -1,5 +1,6 @@
 package com.timetrack.auth;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -45,12 +46,12 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public String register(@Valid @ModelAttribute User user) {
+    public String register(@Valid @ModelAttribute User user, HttpServletRequest request) {
         User existingUser = userService.findById(user.getUsername());
         if (existingUser != null) {
             return "redirect:/register?error";
         }
-        userService.save(user);
+        userService.registerUser(user, request);
         return "redirect:/";
     }
 
