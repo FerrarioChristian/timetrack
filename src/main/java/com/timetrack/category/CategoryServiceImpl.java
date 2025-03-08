@@ -53,7 +53,8 @@ public class CategoryServiceImpl implements CategoryService {
             return null;
         }
 
-        return categoryRepository.findByName(categoryName)
+        String username = SecurityUtil.getSessionUsername();
+        return categoryRepository.findByNameAndCreatedBy_Username(categoryName, username)
                 .orElseGet(() -> addCategory(new Category(categoryName)));
     }
 }

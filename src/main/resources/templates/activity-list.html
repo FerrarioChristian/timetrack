@@ -33,10 +33,10 @@
 </head>
 <body>
 <div class="container flex flex-column">
-    <div class="flex flex-row">
+    <div class="flex flex-rows justify-content-center align-items-center position-relative w-100">
         <h1>Activities</h1>
-        <form th:action="@{/logout}" method="post">
-            <button type="submit">Logout</button>
+        <form th:action="@{/logout}" method="post" class="position-absolute end-0">
+            <button type="submit" class="btn btn-outline-danger">Logout</button>
         </form>
     </div>
 

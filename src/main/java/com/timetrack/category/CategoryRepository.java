@@ -8,7 +8,7 @@ import java.util.Optional;
 
 @Repository
 public interface CategoryRepository extends JpaRepository<Category, Long> {
-    Optional<Category> findByName(String name);
-
     List<Category> findByCreatedBy_Username(String sessionUsername);
+
+    Optional<Category> findByNameAndCreatedBy_Username(String categoryName, String username);
 }
