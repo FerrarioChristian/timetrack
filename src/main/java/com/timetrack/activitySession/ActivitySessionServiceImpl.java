@@ -7,7 +7,6 @@ import com.timetrack.activity.dto.ActivityViewDto;
 import com.timetrack.auth.SecurityUtil;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -46,14 +45,6 @@ public class ActivitySessionServiceImpl implements ActivitySessionService {
                 activitySessionRepository.findByActivityIdAndEndTimeIsNull(activityId).orElseThrow(() -> new IllegalArgumentException("No active session found"));
         session.setEndTime(LocalDateTime.now());
         activitySessionRepository.save(session);
-    }
-
-    @Override
-    public Duration getTotalTimeForActivity(Long activityId) {
-        //TODO tempo totale per ativita
-        Activity activity = activityRepository.findById(activityId).orElseThrow(() -> new IllegalArgumentException(
-                "Activity not found"));
-        return null;
     }
 
     @Override

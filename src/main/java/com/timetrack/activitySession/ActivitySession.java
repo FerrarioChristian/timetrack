@@ -26,34 +26,6 @@ public class ActivitySession {
         return Duration.ZERO;
     }
 
-    public String getDurationString() {
-        Duration duration = getDuration();
-        if (duration == null || duration.isZero()) {
-            return "0s";
-        }
-
-        long days = duration.toDays();
-        long hours = duration.toHoursPart();
-        long minutes = duration.toMinutesPart();
-        long seconds = duration.toSecondsPart();
-
-        StringBuilder result = new StringBuilder();
-        if (days > 0) {
-            result.append(days).append("d ");
-        }
-        if (hours > 0 || days > 0) {
-            result.append(hours).append("h ");
-        }
-        if (minutes > 0 || hours > 0 || days > 0) {
-            result.append(minutes).append("m ");
-        }
-        if (seconds > 0 || (days == 0 && hours == 0 && minutes == 0)) {
-            result.append(seconds).append("s");
-        }
-
-        return result.toString().trim();
-    }
-
     public Long getId() {
         return id;
     }

@@ -26,6 +26,27 @@
                 </div>
             </form>
 
+        <h2>Statistics</h2>
+        <div class="stats-container">
+            <div class="stats-section">
+                <h3>Last Week</h3>
+                <ul>
+                    <li>Session average: <span th:text="${@durationFormatter.print(stats.sessionAverageLastWeek, null)}"></span></li>
+                    <li>Daily average: <span th:text="${@durationFormatter.print(stats.dailyAverageLastWeek, null)}"></span></li>
+                    <li>Total time: <span th:text="${@durationFormatter.print(stats.totalTimeLastWeek, null)}"></span></li>
+                </ul>
+            </div>
+
+            <div class="stats-section">
+                <h3>Last Month</h3>
+                <ul>
+                    <li>Session average: <span th:text="${@durationFormatter.print(stats.sessionAverageLastMonth, null)}"></span></li>
+                    <li>Daily average: <span th:text="${@durationFormatter.print(stats.dailyAverageLastMonth, null)}"></span></li>
+                    <li>Total time: <span th:text="${@durationFormatter.print(stats.totalTimeLastMonth, null)}"></span></li>
+                </ul>
+            </div>
+        </div>
+
         <h2>Activity Sessions</h2>
         <table class="table table-hover">
             <thead class="table-dark">
@@ -41,7 +62,7 @@
                     <td th:text="${activitySessionStat.index+1}"></td>
                     <td th:text="${#temporals.format(activitySession.startTime, 'dd/MM/yyyy HH:mm:ss')}"></td>
                     <td th:text="${activitySession.endTime != null ? #temporals.format(activitySession.endTime, 'dd/MM/yyyy HH:mm:ss') : 'Ongoing'}"></td>
-                    <td th:text="${activitySession.duration != null ? activitySession.getDurationString() : 'In progress'}"></td>
+                    <td th:text="${activitySession.duration != null ? @durationFormatter.print(activitySession.getDuration(), null) : 'In progress'}"></td>
                 </tr>
             </tbody>
         </table>

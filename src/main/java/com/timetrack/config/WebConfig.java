@@ -2,6 +2,7 @@ package com.timetrack.config;
 
 import com.timetrack.converter.DurationToStringConverter;
 import com.timetrack.converter.StringToDurationConverter;
+import com.timetrack.converter.DurationFormatter;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.format.FormatterRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -22,5 +23,6 @@ public class WebConfig implements WebMvcConfigurer {
     public void addFormatters(FormatterRegistry registry) {
         registry.addConverter(stringToDurationConverter);
         registry.addConverter(durationToStringConverter);
+        registry.addFormatter(new DurationFormatter());
     }
 }

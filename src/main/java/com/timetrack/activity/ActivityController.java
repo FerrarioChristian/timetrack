@@ -4,6 +4,7 @@ import com.timetrack.activity.dto.ActivityRequestDto;
 import com.timetrack.activity.dto.ActivityViewDto;
 import com.timetrack.activitySession.ActivitySessionService;
 import com.timetrack.category.CategoryService;
+import com.timetrack.stats.StatsService;
 import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
@@ -19,12 +20,14 @@ public class ActivityController {
     private final ActivityService activityService;
     private final CategoryService categoryService;
     private final ActivitySessionService activitySessionService;
+    private final StatsService statsService;
 
     public ActivityController(ActivityService activityService, CategoryService categoryService,
-                              ActivitySessionService activitySessionService) {
+                              ActivitySessionService activitySessionService, StatsService statsService) {
         this.activityService = activityService;
         this.categoryService = categoryService;
         this.activitySessionService = activitySessionService;
+        this.statsService = statsService;
     }
 
     @GetMapping("/")
@@ -43,8 +46,8 @@ public class ActivityController {
 
     @GetMapping("/activities/{id}/edit")
     public String editActivityPage(Model model, @PathVariable Long id) {
-        Activity activity = activityService.getActivity(id).orElseThrow(() -> new IllegalArgumentException("Activity " +
-                "not found"));
+        Activity activity = activityService.getActivity(id).orElseThrow(() -> new IllegalArgumentException("Activity "
+                + "not found"));
         model.addAttribute("activity", activity);
         model.addAttribute("categories", categoryService.getAllCategories());
         return "activity-edit";
@@ -63,10 +66,14 @@ public class ActivityController {
     @PreAuthorize("@activityServiceImpl.isOwner(#id)")
     @GetMapping("/activities/{id}")
     public String activityDetails(Model model, @PathVariable Long id) {
-        Activity activity = activityService.getActivity(id).orElseThrow(() -> new IllegalArgumentException("Activity " +
-                "not found"));
+        Activity activity = activityService.getActivity(id).orElseThrow(() -> new IllegalArgumentException("Activity "
+                + "not found"));
+
         model.addAttribute("activity", activity);
         model.addAttribute("categories", categoryService.getAllCategories());
+        model.addAttribute("stats", statsService.getDetailsStats(id));
+
+
         return "activity-details";
     }
 

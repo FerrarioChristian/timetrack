@@ -3,8 +3,6 @@ package com.timetrack.activitySession;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.Duration;
-
 @Controller
 @RequestMapping("/sessions")
 public class ActivitySessionController {
@@ -25,10 +23,4 @@ public class ActivitySessionController {
         activitySessionService.stopSession(activityId);
         return "redirect:/";
     }
-
-    @GetMapping("/{activityId}/total-time")
-    public Duration getTotalTime(@PathVariable Long activityId) {
-        return activitySessionService.getTotalTimeForActivity(activityId);
-    }
-
 }
