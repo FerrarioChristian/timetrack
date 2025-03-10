@@ -9,10 +9,22 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
+/**
+ * Security configuration class.
+ * Configures the security of the application.
+ * The application uses form login with a custom login page.
+ * The application uses BCryptPasswordEncoder to encode passwords.
+ * The application uses method security.
+ */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
+    /**
+     * Configures the security of the application.
+     * @param http HttpSecurity object.
+     * @return SecurityFilterChain object.
+     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(auth -> auth

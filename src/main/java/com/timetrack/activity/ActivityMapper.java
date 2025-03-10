@@ -5,6 +5,9 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 
+/**
+ * Mapper for Activity entity.
+ */
 @Component
 public class ActivityMapper {
     public ActivityViewDto toActivityViewDto(Activity activity, boolean isSessionActive,

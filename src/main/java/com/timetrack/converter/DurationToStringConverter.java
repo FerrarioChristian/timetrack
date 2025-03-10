@@ -6,6 +6,9 @@ import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 
+/**
+ * Converts a Duration object to a string in the format HH:mm.
+ */
 @Component
 public class DurationToStringConverter implements Converter<Duration, String> {
     @Override

@@ -6,6 +6,9 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Repository for the Category entity.
+ */
 @Repository
 public interface CategoryRepository extends JpaRepository<Category, Long> {
     List<Category> findByCreatedBy_Username(String sessionUsername);

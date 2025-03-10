@@ -11,29 +11,77 @@ import java.time.Duration;
 import java.util.List;
 
 
+/**
+ * Represents an activity that can be tracked by the user.
+ */
 @Entity
 public class Activity {
+    /**
+     * The unique identifier of the activity.
+     * This is the primary key of the activity table.
+     */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /**
+     * The name of the activity.
+     * This field is required and cannot be empty.
+     */
     @NotEmpty(message = "Activity name cannot be empty.")
     private String name;
+
+    /**
+     * The description of the activity.
+     * This field is optional.
+     */
     private String description;
 
+    /**
+     * The user who created the activity.
+     * This field is required and cannot be empty.
+     */
     @ManyToOne
     @JoinColumn(name = "created_by", nullable = false)
     private User createdBy;
 
+    /**
+     * The sessions of the activity.
+     * This field is a list of activity sessions.
+     * The sessions are ordered by the start time in descending order.
+     * The sessions are deleted when the activity is deleted.
+     */
     @OneToMany(mappedBy = "activity", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("startTime desc")
     private List<ActivitySession> sessions;
 
+    /**
+     * The category of the activity.
+     * This field is required and cannot be empty.
+     */
     @ManyToOne(cascade = CascadeType.PERSIST)
     private Category category;
+    
+    /**
+     * The type of the activity.
+     * This field is required and cannot be empty.
+     */
     private ActivityType activityType;
+
+    /**
+     * The time spent on the activity.
+     * This field is required and cannot be empty.
+     */
     private Duration time;
 
+    /**
+     * Creates a new activity with the given parameters.
+     *
+     * @param id The unique identifier of the activity.
+     * @param name The name of the activity.
+     * @param description The description of the activity.
+     * @param activityType The type of the activity.
+     */
     public Activity(Long id, String name, String description, ActivityType activityType) {
         this.id = id;
         this.name = name;

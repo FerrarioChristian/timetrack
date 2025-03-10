@@ -14,6 +14,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * Controller for handling activity related requests.
+ */
 @Controller
 @RequestMapping
 public class ActivityController {
@@ -30,6 +33,12 @@ public class ActivityController {
         this.statsService = statsService;
     }
 
+    /**
+     * Returns a list of all activities.
+     *
+     * @param model model to add attributes to
+     * @return view name
+     */
     @GetMapping("/")
     public String listActivities(Model model) {
         List<ActivityViewDto> activities = activitySessionService.getAllActivitiesWithSessionStatus();
@@ -37,6 +46,12 @@ public class ActivityController {
         return "activity-list";
     }
 
+    /**
+     * Returns a page for creating a new activity.
+     *
+     * @param model model to add attributes to
+     * @return view name
+     */
     @GetMapping("/activities/new")
     public String newActivityPage(Model model) {
         model.addAttribute("activity", new ActivityRequestDto());
@@ -44,6 +59,12 @@ public class ActivityController {
         return "activity-new";
     }
 
+    /**
+     * Returns a page for editing an activity.
+     * @param model model to add attributes to
+     * @param id id of the activity to edit
+     * @return view name
+     */
     @GetMapping("/activities/{id}/edit")
     public String editActivityPage(Model model, @PathVariable Long id) {
         Activity activity = activityService.getActivity(id).orElseThrow(() -> new IllegalArgumentException("Activity "
@@ -53,6 +74,13 @@ public class ActivityController {
         return "activity-edit";
     }
 
+    /**
+     * Creates a new activity.
+     *
+     * @param activityRequest activity request
+     * @param bindingResult binding result
+     * @return redirect to home page
+     */
     @PostMapping("/activities")
     public String newActivity(@Valid @ModelAttribute("activity") ActivityRequestDto activityRequest,
                               BindingResult bindingResult) {
@@ -63,6 +91,13 @@ public class ActivityController {
         return "redirect:/";
     }
 
+    /**
+     * Returns a page with details of an activity.
+     * @param model model to add attributes to
+     * @param id id of the activity
+     * @return view name
+     * @throws IllegalArgumentException if activity is not found
+     */
     @PreAuthorize("@activityServiceImpl.isOwner(#id)")
     @GetMapping("/activities/{id}")
     public String activityDetails(Model model, @PathVariable Long id) {
@@ -73,10 +108,16 @@ public class ActivityController {
         model.addAttribute("categories", categoryService.getAllCategories());
         model.addAttribute("stats", statsService.getDetailsStats(id));
 
-
         return "activity-details";
     }
 
+    /**
+     * Updates an activity.
+     *
+     * @param updatedActivity updated activity
+     * @param id id of the activity to update
+     * @return redirect to home page
+     */
     @PreAuthorize("@activityServiceImpl.isOwner(#id)")
     @PutMapping("/activities/{id}")
     public String updateActivity(@ModelAttribute ActivityRequestDto updatedActivity, @PathVariable Long id) {
@@ -84,6 +125,12 @@ public class ActivityController {
         return "redirect:/";
     }
 
+    /**
+     * Deletes an activity.
+     *
+     * @param id id of the activity to delete
+     * @return redirect to home page
+     */
     @PreAuthorize("@activityServiceImpl.isOwner(#id)")
     @DeleteMapping("/activities/{id}")
     public String deleteActivity(@PathVariable Long id) {

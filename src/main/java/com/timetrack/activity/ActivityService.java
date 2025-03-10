@@ -4,6 +4,9 @@ import com.timetrack.activity.dto.ActivityRequestDto;
 
 import java.util.Optional;
 
+/**
+ * Service for managing activities.
+ */
 public interface ActivityService {
 
     Optional<Activity> getActivity(Long id);

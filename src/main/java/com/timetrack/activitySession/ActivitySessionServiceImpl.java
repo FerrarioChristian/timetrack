@@ -12,12 +12,22 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/**
+ * Service for managing activity sessions.
+ */
 @Service
 public class ActivitySessionServiceImpl implements ActivitySessionService {
     private final ActivitySessionRepository activitySessionRepository;
     private final ActivityRepository activityRepository;
     private final ActivityMapper activityMapper;
 
+    /**
+     * Constructor.
+     *
+     * @param activitySessionRepository Activity session repository
+     * @param activityRepository        Activity repository
+     * @param activityMapper            Activity mapper
+     */
     public ActivitySessionServiceImpl(ActivitySessionRepository activitySessionRepository,
                                       ActivityRepository activityRepository, ActivityMapper activityMapper) {
         this.activitySessionRepository = activitySessionRepository;
@@ -25,6 +35,11 @@ public class ActivitySessionServiceImpl implements ActivitySessionService {
         this.activityMapper = activityMapper;
     }
 
+    /**
+     * Starts a session for the given activity.
+     *
+     * @param activityId Activity ID
+     */
     @Override
     public void startSession(Long activityId) {
         Activity activity = activityRepository.findById(activityId).orElseThrow(() -> new IllegalArgumentException(
@@ -39,6 +54,11 @@ public class ActivitySessionServiceImpl implements ActivitySessionService {
         }
     }
 
+    /**
+     * Stops the session for the given activity.
+     *
+     * @param activityId Activity ID
+     */
     @Override
     public void stopSession(Long activityId) {
         ActivitySession session =
@@ -47,16 +67,33 @@ public class ActivitySessionServiceImpl implements ActivitySessionService {
         activitySessionRepository.save(session);
     }
 
+    /**
+     * Checks if a session is active for the given activity.
+     *
+     * @param activityId Activity ID
+     * @return True if a session is active, false otherwise
+     */
     @Override
     public boolean isSessionActive(Long activityId) {
         return activitySessionRepository.findByActivityIdAndEndTimeIsNull(activityId).isPresent();
     }
 
+    /**
+     * Gets the active session for the given activity.
+     *
+     * @param activityId Activity ID
+     * @return Active session
+     */
     @Override
     public Optional<ActivitySession> getActiveSession(Long activityId) {
         return activitySessionRepository.findByActivityIdAndEndTimeIsNull(activityId);
     }
 
+    /**
+     * Gets all activities with session status.
+     *
+     * @return List of activities with session status
+     */
     @Override
     public List<ActivityViewDto> getAllActivitiesWithSessionStatus() {
         List<Activity> activities = activityRepository.findByCreatedBy_Username(SecurityUtil.getSessionUsername());

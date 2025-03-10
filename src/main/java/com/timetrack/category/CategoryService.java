@@ -2,6 +2,9 @@ package com.timetrack.category;
 
 import java.util.List;
 
+/**
+ * Service interface for the Category entity. 
+ */
 public interface CategoryService {
     List<Category> getAllCategories();
     Category addCategory(Category category);

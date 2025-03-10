@@ -2,8 +2,10 @@ package com.timetrack.stats;
 
 import java.time.Duration;
 
+/**
+ * DTO class for detailed statistics.
+ */
 public class DetailsStatsDto {
-
     private Duration sessionAverageLastWeek;
     private Duration sessionAverageLastMonth;
     private Duration dailyAverageLastWeek;

@@ -7,6 +7,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.format.FormatterRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+/**
+ * Web configuration class.
+ * Configures the web of the application.
+ * Adds converters and formatters to the application.
+ */
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 

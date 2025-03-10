@@ -12,6 +12,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Implementation of the StatsService interface.
+ * This class is responsible for calculating statistics for a given activity.
+ */
 @Service
 public class StatsServiceImpl implements StatsService {
     private final ActivityRepository activityRepository;
@@ -20,6 +24,12 @@ public class StatsServiceImpl implements StatsService {
         this.activityRepository = activityRepository;
     }
 
+    /**
+     * Calculates the daily average duration of an activity.
+     * @param activityId the id of the activity
+     * @param fromDate the date from which to calculate the average
+     * @return the daily average duration of the activity
+     */
     @Override
     public Duration calculateDailyAverage(Long activityId, LocalDateTime fromDate) {
         Activity activity = activityRepository.findById(activityId).orElseThrow(() -> new IllegalArgumentException(
@@ -48,6 +58,12 @@ public class StatsServiceImpl implements StatsService {
         return total.dividedBy(dailyDurations.size());
     }
 
+    /**
+     * Calculates the average duration of an activity session.
+     * @param activityId the id of the activity
+     * @param fromDate the date from which to calculate the average
+     * @return the average duration of an activity session
+     */
     @Override
     public Duration calculateSessionAverage(Long activityId, LocalDateTime fromDate) {
         Activity activity = activityRepository.findById(activityId).orElseThrow(() -> new IllegalArgumentException(
@@ -64,6 +80,12 @@ public class StatsServiceImpl implements StatsService {
         return totalTime.dividedBy(sessions.size());
     }
 
+    /**
+     * Calculates the total time spent on an activity.
+     * @param activityId the id of the activity
+     * @param fromDate the date from which to calculate the total time
+     * @return the total time spent on the activity
+     */
     @Override
     public Duration calculateTotalTime(Long activityId, LocalDateTime fromDate){
         Activity activity = activityRepository.findById(activityId).orElseThrow(() -> new IllegalArgumentException(
@@ -84,36 +106,71 @@ public class StatsServiceImpl implements StatsService {
         return totalTime;
     }
 
+    /**
+     * Calculates the daily average duration of an activity.
+     * @param activityId the id of the activity
+     * @return the daily average duration of the activity
+     */
     @Override
     public Duration getSessionAverageLastWeek(Long activityId) {
         return calculateSessionAverage(activityId, LocalDateTime.now().minusWeeks(1));
     }
 
+    /**
+     * Calculates the daily average duration of an activity.
+     * @param activityId the id of the activity
+     * @return the daily average duration of the activity
+     */
     @Override
     public Duration getSessionAverageLastMonth(Long activityId) {
         return calculateSessionAverage(activityId, LocalDateTime.now().minusMonths(1));
     }
 
+    /**
+     * Calculates the daily average duration of an activity.
+     * @param activityId the id of the activity
+     * @return the daily average duration of the activity
+     */
     @Override
     public Duration getDailyAverageLastWeek(Long activityId) {
         return calculateDailyAverage(activityId, LocalDateTime.now().minusWeeks(1));
     }
 
+    /**
+     * Calculates the daily average duration of an activity.
+     * @param activityId the id of the activity
+     * @return the daily average duration of the activity
+     */
     @Override
     public Duration getDailyAverageLastMonth(Long activityId) {
         return calculateDailyAverage(activityId, LocalDateTime.now().minusMonths(1));
     }
 
+    /**
+     * Calculates the daily average duration of an activity.
+     * @param activityId the id of the activity
+     * @return the daily average duration of the activity
+     */
     @Override
     public Duration getTotalTimeLastWeek(Long activityId) {
         return calculateTotalTime(activityId, LocalDateTime.now().minusWeeks(1));
     }
 
+    /**
+     * Calculates the daily average duration of an activity.
+     * @param activityId the id of the activity
+     * @return the daily average duration of the activity
+     */
     @Override
     public Duration getTotalTimeLastMonth(Long activityId) {
         return calculateTotalTime(activityId, LocalDateTime.now().minusMonths(1));
     }
 
+    /**
+     * Returns a DetailsStatsDto object containing the statistics for a given activity.
+     * @param activityId the id of the activity
+     * @return a DetailsStatsDto object containing the statistics for the activity
+     */
     @Override
     public DetailsStatsDto getDetailsStats(Long activityId) {
         return new DetailsStatsDto(

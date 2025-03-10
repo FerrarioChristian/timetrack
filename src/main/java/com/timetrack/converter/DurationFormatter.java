@@ -8,14 +8,31 @@ import java.time.Duration;
 import java.util.Locale;
 import java.util.Objects;
 
+/**
+ * Formatter for {@link Duration} objects.
+ */
 @Component
 public class DurationFormatter implements Formatter<Duration> {
 
+    /**
+     * Parses a {@link String} into a {@link Duration} object.
+     *
+     * @param text   the text to parse
+     * @param locale the locale to use
+     * @return the parsed {@link Duration} object
+     */
     @Override
     public @NonNull Duration parse(@NonNull String text, @NonNull Locale locale) {
         return Objects.requireNonNull(new StringToDurationConverter().convert(text));
     }
 
+    /**
+     * Formats a {@link Duration} object into a {@link String}.
+     *
+     * @param duration the {@link Duration} object to format
+     * @param locale   the locale to use
+     * @return the formatted {@link String}
+     */
     @Override
     public @NonNull String print(Duration duration, @NonNull Locale locale) {
         if (duration.isZero() || duration.isNegative()) {
