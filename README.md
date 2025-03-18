@@ -2,6 +2,8 @@
 TimeTrack è un’applicazione web per la gestione e il monitoraggio del tempo dedicato alle varie attività durante la giornata.
 Gli utenti possono creare, organizzare e tracciare le proprie attività con sessioni temporali e visualizzare alcune statistiche sul tempo dedicato a ciascuna attività.
 
+![record](/docs/record.gif)
+
 ## Funzionalità principali
 
 ### Autenticazione e gestione utenti
@@ -68,7 +70,3 @@ DB_PASS=<password>
 
 ### Statistiche calcolate dinamicamente
 - Le statistiche non sono salvate nel database, ma vengono calcolate on-demand
-
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
