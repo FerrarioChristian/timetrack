@@ -26,12 +26,12 @@ public class StatsServiceImpl implements StatsService {
 
     /**
      * Calculates the daily average duration of an activity.
+     *
      * @param activityId the id of the activity
-     * @param fromDate the date from which to calculate the average
+     * @param fromDate   the date from which to calculate the average
      * @return the daily average duration of the activity
      */
-    @Override
-    public Duration calculateDailyAverage(Long activityId, LocalDateTime fromDate) {
+    private Duration calculateDailyAverage(Long activityId, LocalDateTime fromDate) {
         Activity activity = activityRepository.findById(activityId).orElseThrow(() -> new IllegalArgumentException(
                 "Activity not found"));
         List<ActivitySession> sessions = activity.getSessions();
@@ -60,12 +60,12 @@ public class StatsServiceImpl implements StatsService {
 
     /**
      * Calculates the average duration of an activity session.
+     *
      * @param activityId the id of the activity
-     * @param fromDate the date from which to calculate the average
+     * @param fromDate   the date from which to calculate the average
      * @return the average duration of an activity session
      */
-    @Override
-    public Duration calculateSessionAverage(Long activityId, LocalDateTime fromDate) {
+    private Duration calculateSessionAverage(Long activityId, LocalDateTime fromDate) {
         Activity activity = activityRepository.findById(activityId).orElseThrow(() -> new IllegalArgumentException(
                 "Activity not found"));
         List<ActivitySession> sessions = activity.getSessions();
@@ -82,12 +82,12 @@ public class StatsServiceImpl implements StatsService {
 
     /**
      * Calculates the total time spent on an activity.
+     *
      * @param activityId the id of the activity
-     * @param fromDate the date from which to calculate the total time
+     * @param fromDate   the date from which to calculate the total time
      * @return the total time spent on the activity
      */
-    @Override
-    public Duration calculateTotalTime(Long activityId, LocalDateTime fromDate){
+    private Duration calculateTotalTime(Long activityId, LocalDateTime fromDate) {
         Activity activity = activityRepository.findById(activityId).orElseThrow(() -> new IllegalArgumentException(
                 "Activity not found"));
         List<ActivitySession> sessions = activity.getSessions();
@@ -108,6 +108,7 @@ public class StatsServiceImpl implements StatsService {
 
     /**
      * Calculates the daily average duration of an activity.
+     *
      * @param activityId the id of the activity
      * @return the daily average duration of the activity
      */
@@ -118,6 +119,7 @@ public class StatsServiceImpl implements StatsService {
 
     /**
      * Calculates the daily average duration of an activity.
+     *
      * @param activityId the id of the activity
      * @return the daily average duration of the activity
      */
@@ -128,6 +130,7 @@ public class StatsServiceImpl implements StatsService {
 
     /**
      * Calculates the daily average duration of an activity.
+     *
      * @param activityId the id of the activity
      * @return the daily average duration of the activity
      */
@@ -138,6 +141,7 @@ public class StatsServiceImpl implements StatsService {
 
     /**
      * Calculates the daily average duration of an activity.
+     *
      * @param activityId the id of the activity
      * @return the daily average duration of the activity
      */
@@ -148,6 +152,7 @@ public class StatsServiceImpl implements StatsService {
 
     /**
      * Calculates the daily average duration of an activity.
+     *
      * @param activityId the id of the activity
      * @return the daily average duration of the activity
      */
@@ -158,6 +163,7 @@ public class StatsServiceImpl implements StatsService {
 
     /**
      * Calculates the daily average duration of an activity.
+     *
      * @param activityId the id of the activity
      * @return the daily average duration of the activity
      */
@@ -168,6 +174,7 @@ public class StatsServiceImpl implements StatsService {
 
     /**
      * Returns a DetailsStatsDto object containing the statistics for a given activity.
+     *
      * @param activityId the id of the activity
      * @return a DetailsStatsDto object containing the statistics for the activity
      */
