@@ -27,15 +27,9 @@ public class StatsServiceImpl implements StatsService {
     /**
      * Calculates the daily average duration of an activity.
      *
-     * @param activityId the id of the activity
-     * @param fromDate   the date from which to calculate the average
      * @return the daily average duration of the activity
      */
-    private Duration calculateDailyAverage(Long activityId, LocalDateTime fromDate) {
-        Activity activity = activityRepository.findById(activityId).orElseThrow(() -> new IllegalArgumentException(
-                "Activity not found"));
-        List<ActivitySession> sessions = activity.getSessions();
-
+    private Duration calculateDailyAverage(List<ActivitySession> sessions) {
         if (sessions.isEmpty()) {
             return Duration.ZERO;
         }
@@ -61,15 +55,9 @@ public class StatsServiceImpl implements StatsService {
     /**
      * Calculates the average duration of an activity session.
      *
-     * @param activityId the id of the activity
-     * @param fromDate   the date from which to calculate the average
      * @return the average duration of an activity session
      */
-    private Duration calculateSessionAverage(Long activityId, LocalDateTime fromDate) {
-        Activity activity = activityRepository.findById(activityId).orElseThrow(() -> new IllegalArgumentException(
-                "Activity not found"));
-        List<ActivitySession> sessions = activity.getSessions();
-
+    private Duration calculateSessionAverage(List<ActivitySession> sessions) {
         if (sessions.isEmpty()) {
             return Duration.ZERO;
         }
@@ -83,15 +71,9 @@ public class StatsServiceImpl implements StatsService {
     /**
      * Calculates the total time spent on an activity.
      *
-     * @param activityId the id of the activity
-     * @param fromDate   the date from which to calculate the total time
      * @return the total time spent on the activity
      */
-    private Duration calculateTotalTime(Long activityId, LocalDateTime fromDate) {
-        Activity activity = activityRepository.findById(activityId).orElseThrow(() -> new IllegalArgumentException(
-                "Activity not found"));
-        List<ActivitySession> sessions = activity.getSessions();
-
+    private Duration calculateTotalTime(List<ActivitySession> sessions) {
         if (sessions.isEmpty()) {
             return Duration.ZERO;
         }
@@ -105,71 +87,20 @@ public class StatsServiceImpl implements StatsService {
         }
         return totalTime;
     }
-
     /**
-     * Calculates the daily average duration of an activity.
+     * Returns a list of ActivitySessions of the Activity before the fromDate
      *
-     * @param activityId the id of the activity
-     * @return the daily average duration of the activity
+     * @param activityId the id of the Activity
+     * @param fromDate Date
+     * @return List<ActivitySessions>
      */
-    @Override
-    public Duration getSessionAverageLastWeek(Long activityId) {
-        return calculateSessionAverage(activityId, LocalDateTime.now().minusWeeks(1));
-    }
+    private List<ActivitySession> getFilteredSessions(Long activityId, LocalDateTime fromDate) {
+        Activity activity = activityRepository.findById(activityId)
+                .orElseThrow(() -> new IllegalArgumentException("Activity not found"));
 
-    /**
-     * Calculates the daily average duration of an activity.
-     *
-     * @param activityId the id of the activity
-     * @return the daily average duration of the activity
-     */
-    @Override
-    public Duration getSessionAverageLastMonth(Long activityId) {
-        return calculateSessionAverage(activityId, LocalDateTime.now().minusMonths(1));
-    }
-
-    /**
-     * Calculates the daily average duration of an activity.
-     *
-     * @param activityId the id of the activity
-     * @return the daily average duration of the activity
-     */
-    @Override
-    public Duration getDailyAverageLastWeek(Long activityId) {
-        return calculateDailyAverage(activityId, LocalDateTime.now().minusWeeks(1));
-    }
-
-    /**
-     * Calculates the daily average duration of an activity.
-     *
-     * @param activityId the id of the activity
-     * @return the daily average duration of the activity
-     */
-    @Override
-    public Duration getDailyAverageLastMonth(Long activityId) {
-        return calculateDailyAverage(activityId, LocalDateTime.now().minusMonths(1));
-    }
-
-    /**
-     * Calculates the daily average duration of an activity.
-     *
-     * @param activityId the id of the activity
-     * @return the daily average duration of the activity
-     */
-    @Override
-    public Duration getTotalTimeLastWeek(Long activityId) {
-        return calculateTotalTime(activityId, LocalDateTime.now().minusWeeks(1));
-    }
-
-    /**
-     * Calculates the daily average duration of an activity.
-     *
-     * @param activityId the id of the activity
-     * @return the daily average duration of the activity
-     */
-    @Override
-    public Duration getTotalTimeLastMonth(Long activityId) {
-        return calculateTotalTime(activityId, LocalDateTime.now().minusMonths(1));
+        return activity.getSessions().stream()
+                .filter(session -> session.getStartTime().isAfter(fromDate) || session.getStartTime().isEqual(fromDate))
+                .toList();
     }
 
     /**
@@ -180,13 +111,19 @@ public class StatsServiceImpl implements StatsService {
      */
     @Override
     public DetailsStatsDto getDetailsStats(Long activityId) {
+        LocalDateTime oneWeekAgo = LocalDateTime.now().minusWeeks(1);
+        LocalDateTime oneMonthAgo = LocalDateTime.now().minusMonths(1);
+
+        List<ActivitySession> sessionsLastWeek = getFilteredSessions(activityId, oneWeekAgo);
+        List<ActivitySession> sessionsLastMonth = getFilteredSessions(activityId, oneMonthAgo);
+
         return new DetailsStatsDto(
-                getSessionAverageLastWeek(activityId),
-                getSessionAverageLastMonth(activityId),
-                getDailyAverageLastWeek(activityId),
-                getDailyAverageLastMonth(activityId),
-                getTotalTimeLastWeek(activityId),
-                getTotalTimeLastMonth(activityId)
+                calculateSessionAverage(sessionsLastWeek),
+                calculateSessionAverage(sessionsLastMonth),
+                calculateDailyAverage(sessionsLastWeek),
+                calculateDailyAverage(sessionsLastMonth),
+                calculateTotalTime(sessionsLastWeek),
+                calculateTotalTime(sessionsLastMonth)
         );
     }
 
