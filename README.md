@@ -2,6 +2,8 @@
 TimeTrack è un’applicazione web per la gestione e il monitoraggio del tempo dedicato alle varie attività durante la giornata.
 Gli utenti possono creare, organizzare e tracciare le proprie attività con sessioni temporali e visualizzare alcune statistiche sul tempo dedicato a ciascuna attività.
 
+![record](/docs/record.gif)
+
 ## Funzionalità principali
 
 ### Autenticazione e gestione utenti
