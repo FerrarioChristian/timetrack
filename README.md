@@ -70,3 +70,32 @@ DB_PASS=<password>
 
 ### Statistiche calcolate dinamicamente
 - Le statistiche non sono salvate nel database, ma vengono calcolate on-demand
+
+## Architettura MVC
+L'applicazione segue il pattern Model-View-Controller (MVC) per mantenere una
+chiara separazione delle responsabilità, migliorare la manutenibilità e
+facilitare la scalabilità.
+
+### Model
+Il Model rappresenta i dati e la logica di business dell'applicazione.
+
+Le entità principali sono mappate su tabelle del database utilizzando JPA/Hibernate.\
+Il repository fornisce metodi per interagire con il database, recuperare e salvare i dati.\
+La logica di business, come il calcolo delle statistiche, è implementata nei services.
+
+### View
+Il livello View è responsabile della presentazione dei dati all'utente.
+
+L'app utilizza Thymeleaf per generare pagine HTML dinamiche.\
+I dati vengono passati dai controller alle viste tramite ModelAttributes.\
+Formattatori personalizzati sono utilizzati per visualizzare i dati in modo leggibile (es. conversione di Duration in formato leggibile).
+
+### Controller
+Il livello Controller gestisce le richieste HTTP e funge da intermediario tra il Model e la View.
+
+ActivityController gestisce la creazione, modifica e cancellazione delle attività.\
+ActivitySessionController gestisce l'avvio e l'interruzione delle sessioni di attività.\
+CategoryController gestisce la creazione, e modifica delle categorie.\
+StatsController recupera e passa le statistiche alla vista.
+
+L'uso di Spring Security assicura che gli utenti possano accedere solo alle proprie attività.
