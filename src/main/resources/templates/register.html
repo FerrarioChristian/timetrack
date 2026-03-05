@@ -1,31 +1,68 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link th:href="@{/styles/new-edit.css}" rel="stylesheet"/>
-    <link th:href="@{/styles/bootstrap.min.css}" rel="stylesheet"/>
-    <link th:href="@{/styles/main.css}" rel="stylesheet"/>
-    <title>Login - Time Tracker</title>
+    <title>Register - Timetrack</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        background: '#09090b', card: '#09090b', cardForeground: '#fafafa',
+                        border: '#27272a', primary: '#fafafa', primaryForeground: '#18181b',
+                        muted: '#27272a', mutedForeground: '#a1a1aa', destructive: '#7f1d1d',
+                    },
+                    fontFamily: { sans: ['Inter', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: theme('colors.background'); color: theme('colors.primary'); }
+    </style>
 </head>
-<body>
-<h1>Register</h1>
-<div class="container">
-    <form class="mt-4 flex flex-column gap-4 w-75 m-auto" th:action="@{/register}" method="post" th:object="${user}">
-        <label th:for="username">
-            Username
-            <input th:field="*{username}" placeholder="Username" class="form-control">
-        </label>
-        <label th:for="password">
-            Password
-            <input th:field="*{password}" type="password" placeholder="Password" class="form-control">
-        </label>
+<body class="antialiased min-h-screen flex items-center justify-center p-4">
 
-        <p th:if="${param.error}" class="text-danger m-0" >User already exists.</p>
+<div class="w-full max-w-sm rounded-xl border border-border bg-card text-cardForeground shadow-sm">
+    <div class="flex flex-col space-y-1.5 p-6 text-center">
+        <div class="mx-auto bg-accent rounded-full p-3 mb-2 w-12 h-12 flex items-center justify-center border border-border">
+            <i data-lucide="user-plus" class="w-6 h-6"></i>
+        </div>
+        <h3 class="font-semibold tracking-tight text-2xl">Create an account</h3>
+        <p class="text-sm text-mutedForeground">Enter your details to get started</p>
+    </div>
+    
+    <div class="p-6 pt-0">
+        <form th:action="@{/register}" method="post" th:object="${user}" class="space-y-4">
+            <div class="space-y-2">
+                <label for="username" class="text-sm font-medium leading-none">Username</label>
+                <input id="username" th:field="*{username}" placeholder="johndoe" required class="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-mutedForeground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+            </div>
+            
+            <div class="space-y-2">
+                <label for="password" class="text-sm font-medium leading-none">Password</label>
+                <input id="password" type="password" th:field="*{password}" required class="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-mutedForeground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+            </div>
 
-        <button type="submit" class="btn btn-primary">Register</button>
-        <a th:href="@{'/login'}" class="btn btn-outline-primary">Login</a>
-    </form>
+            <div th:if="${param.error}" class="text-destructive text-sm font-medium">User already exists.</div>
+
+            <button type="submit" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-primary text-primaryForeground hover:bg-primary/90 h-10 w-full">
+                Create Account
+            </button>
+        </form>
+    </div>
+    
+    <div class="flex items-center justify-center p-6 pt-0 text-sm">
+        <span class="text-mutedForeground mr-1">Already have an account?</span>
+        <a th:href="@{/login}" class="font-medium hover:underline">Sign In</a>
+    </div>
 </div>
+
+<script>lucide.createIcons();</script>
 </body>
 </html>

@@ -1,53 +1,67 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link th:href="@{/styles/new-edit.css}" rel="stylesheet"/>
-    <link th:href="@{/styles/bootstrap.min.css}" rel="stylesheet"/>
-    <link th:href="@{/styles/main.css}" rel="stylesheet"/>
-    <title>Time Tracker</title>
-</head>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{fragments/layout :: layout('New Activity - Timetrack', ~{::div})}">
 <body>
-<div class="container">
-    <h1>Time Tracker</h1>
-
-    <form th:action="@{/activities}" th:object="${activity}" method="post" class="mt-4 flex flex-column gap-4">
-        <label for="name">Activity Name
-            <input type="text" id="name" name="name" th:field="*{name}" placeholder="Activity name" class="form-control">
-        </label>
-
-        <label for="description">Description
-            <input type="text" id="description" name="description" th:field="*{description}" placeholder="Description" class="form-control">
-        </label>
-
-        <label for="time">Goal Time (hh:mm)
-            <input type="time" id="time" name="time" th:field="*{time}" class="form-control" onclick="this.showPicker()">
-        </label>
-
-        <label for="category">Category
-            <input id="category" name="categoryName" list="categories" th:field="*{categoryName}"
-                   placeholder="Select or add category" class="form-control" autocomplete="off">
-            <datalist id="categories">
-                <option th:each="category : ${categories}" th:value="${category.name}"
-                        th:text="${category.name}"></option>
-            </datalist>
-        </label>
-
-        <label for="activityType">Type
-            <select id="activityType" name="activityType" th:field="*{activityType}" class="form-select">
-                <option value="GOAL">Goal (Minimum Time)</option>
-                <option value="MAX_TIME">Max Time (Limit)</option>
-            </select>
-        </label>
-
-        <p th:if="${#fields.hasErrors('name')}" class="text-danger m-0" th:errors="*{name}"></p>
-
-        <div class="flex gap-3">
-            <button type="submit" class="btn btn-success">Save Changes</button>
-            <a th:href="@{'/'}" class="btn btn-danger">Cancel</a>
+<div class="max-w-4xl mx-auto">
+    <div class="mb-8 flex items-center gap-4">
+        <a th:href="@{/activities}" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accentForeground h-10 w-10 text-mutedForeground">
+            <i data-lucide="arrow-left" class="w-5 h-5"></i>
+        </a>
+        <div>
+            <h1 class="text-3xl font-bold tracking-tight">New Activity</h1>
+            <p class="text-mutedForeground mt-1">Create a new activity to track your time.</p>
         </div>
-    </form>
+    </div>
+
+    <div class="rounded-xl border border-border bg-card text-cardForeground shadow-sm max-w-2xl mx-auto">
+        <form th:action="@{/activities}" th:object="${activity}" method="post" class="p-6 space-y-6">
+            
+            <div th:if="${#fields.hasErrors('name')}" class="bg-destructive/20 border border-destructive/50 text-destructive-foreground p-3 rounded-md text-sm">
+                <span th:errors="*{name}"></span>
+            </div>
+
+            <div class="space-y-2">
+                <label for="name" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Activity Name</label>
+                <input type="text" id="name" th:field="*{name}" placeholder="e.g., Learn Spring Boot" class="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-mutedForeground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+            </div>
+
+            <div class="space-y-2">
+                <label for="description" class="text-sm font-medium leading-none">Description</label>
+                <input type="text" id="description" th:field="*{description}" placeholder="e.g., Watch tutorial videos and write code" class="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-mutedForeground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-2">
+                    <label for="time" class="text-sm font-medium leading-none">Goal/Max Time (hh:mm)</label>
+                    <input type="time" id="time" th:field="*{time}" class="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm ring-offset-background text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" onclick="this.showPicker()">
+                </div>
+
+                <div class="space-y-2">
+                    <label for="activityType" class="text-sm font-medium leading-none">Type</label>
+                    <select id="activityType" th:field="*{activityType}" class="flex h-10 w-full items-center justify-between rounded-md border border-border bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+                        <option value="GOAL">Goal (Minimum Time)</option>
+                        <option value="MAX_TIME">Max Time (Limit)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <label for="category" class="text-sm font-medium leading-none">Category</label>
+                <input id="category" th:field="*{categoryName}" list="categories" placeholder="Select or type a new category" autocomplete="off" class="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-mutedForeground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                <datalist id="categories">
+                    <option th:each="category : ${categories}" th:value="${category.name}" th:text="${category.name}"></option>
+                </datalist>
+            </div>
+
+            <div class="flex items-center gap-4 pt-4 border-t border-border">
+                <button type="submit" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-primary text-primaryForeground hover:bg-primary/90 h-10 px-4 py-2">
+                    Create Activity
+                </button>
+                <a th:href="@{/activities}" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-border bg-transparent hover:bg-accent hover:text-accentForeground h-10 px-4 py-2">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
 </div>
 </body>
 </html>
