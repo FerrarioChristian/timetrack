@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{fragments/layout :: layout('Categories - Timetrack', ~{::div})}">
+<body>
+<div class="max-w-4xl mx-auto">
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-3xl font-bold tracking-tight">Categories</h1>
+            <p class="text-mutedForeground mt-2">Manage your activity categories.</p>
+        </div>
+        <button type="button" onclick="openCategoryModal('add')" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-primary text-primaryForeground hover:bg-primary/90 h-10 px-4 py-2 gap-2">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            New Category
+        </button>
+    </div>
+
+    <div class="rounded-xl border border-border bg-card text-cardForeground shadow-sm overflow-hidden mb-8">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left">
+                <thead class="text-xs text-mutedForeground bg-accent/50 border-b border-border">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 font-medium">Name</th>
+                        <th scope="col" class="px-6 py-3 font-medium text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:if="${categories.isEmpty()}">
+                        <td colspan="2" class="px-6 py-8 text-center text-mutedForeground">No categories created yet.</td>
+                    </tr>
+                    <tr th:each="category : ${categories}" class="border-b border-border hover:bg-accent/30 transition-colors last:border-0">
+                        <td class="px-6 py-4 font-medium" th:text="${category.name}"></td>
+                        <td class="px-6 py-4 text-right">
+                            <div class="flex justify-end gap-2">
+                                <button type="button" th:data-id="${category.id}" th:data-name="${category.name}" onclick="openCategoryModal('edit', this.getAttribute('data-id'), this.getAttribute('data-name'))" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accentForeground h-8 w-8 text-mutedForeground">
+                                    <i data-lucide="pencil" class="w-4 h-4"></i>
+                                </button>
+                                <form th:action="@{'/categories/' + ${category.id}}" th:method="delete" onsubmit="return confirm('Delete this category? This will affect all associated activities.');">
+                                    <button type="submit" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-destructive hover:text-destructiveForeground h-8 w-8 text-mutedForeground">
+                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Category Modal -->
+    <div id="categoryModal" class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm hidden flex items-center justify-center">
+        <div class="bg-card text-cardForeground border border-border shadow-lg rounded-xl max-w-md w-full p-6">
+            <h2 id="categoryModalTitle" class="text-xl font-bold tracking-tight mb-4">Create Category</h2>
+            
+            <form id="categoryForm" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <div class="space-y-4">
+                    <div class="grid gap-2">
+                        <label for="name" class="text-sm font-medium leading-none">Name</label>
+                        <input type="text" id="name" name="name" required placeholder="e.g. Work, Personal" class="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                    </div>
+                </div>
+                
+                <div class="flex gap-4 mt-6">
+                    <button type="button" onclick="document.getElementById('categoryModal').classList.add('hidden')" class="flex-1 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-border bg-transparent hover:bg-accent hover:text-accentForeground h-10 px-4 py-2">
+                        Cancel
+                    </button>
+                    <button type="submit" class="flex-1 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-primary text-primaryForeground hover:bg-primary/90 h-10 px-4 py-2">
+                        Save
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script th:inline="javascript">
+        function openCategoryModal(mode, id, name) {
+            const form = document.getElementById('categoryForm');
+            const title = document.getElementById('categoryModalTitle');
+            const nameInput = document.getElementById('name');
+            
+            if (mode === 'add') {
+                title.textContent = 'Create Category';
+                form.action = '/categories';
+                nameInput.value = '';
+            } else {
+                title.textContent = 'Edit Category';
+                form.action = '/categories/edit/' + id;
+                nameInput.value = name;
+            }
+            
+            document.getElementById('categoryModal').classList.remove('hidden');
+        }
+    </script>
+</div>
+</body>
+</html>
