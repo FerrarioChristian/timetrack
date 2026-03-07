@@ -18,7 +18,6 @@ import java.util.List;
  * Controller for handling activity related requests.
  */
 @Controller
-@RequestMapping
 public class ActivityController {
     private final ActivityService activityService;
     private final CategoryService categoryService;
@@ -39,7 +38,7 @@ public class ActivityController {
      * @param model model to add attributes to
      * @return view name
      */
-    @GetMapping("/")
+    @GetMapping("/activities")
     public String listActivities(Model model) {
         List<ActivityViewDto> activities = activitySessionService.getAllActivitiesWithSessionStatus();
         model.addAttribute("activities", activities);
@@ -88,7 +87,7 @@ public class ActivityController {
             return "activity-new";
         }
         activityService.addActivity(activityRequest);
-        return "redirect:/";
+        return "redirect:/activities";
     }
 
     /**
@@ -122,7 +121,7 @@ public class ActivityController {
     @PutMapping("/activities/{id}")
     public String updateActivity(@ModelAttribute ActivityRequestDto updatedActivity, @PathVariable Long id) {
         activityService.updateActivity(id, updatedActivity);
-        return "redirect:/";
+        return "redirect:/activities";
     }
 
     /**
@@ -135,6 +134,6 @@ public class ActivityController {
     @DeleteMapping("/activities/{id}")
     public String deleteActivity(@PathVariable Long id) {
         activityService.deleteActivity(id);
-        return "redirect:/";
+        return "redirect:/activities";
     }
 }

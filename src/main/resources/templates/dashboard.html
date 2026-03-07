@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{fragments/layout :: layout('Dashboard - Timetrack', ~{::div})}">
+<body>
+<div class="max-w-6xl mx-auto">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold tracking-tight">Dashboard</h1>
+        <p class="text-mutedForeground mt-2">Overview of your time tracking statistics for this week.</p>
+    </div>
+
+    <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
+        <!-- Card 1 -->
+        <div class="rounded-xl border border-border bg-card text-cardForeground shadow-sm flex flex-col p-6">
+            <div class="flex flex-row items-center justify-between pb-2">
+                <h3 class="tracking-tight text-sm font-medium">Time Today</h3>
+                <i data-lucide="clock" class="h-4 w-4 text-mutedForeground"></i>
+            </div>
+            <div class="text-2xl font-bold" th:text="${@durationFormatter.print(stats.totalTimeToday, null) != 'N/A' ? @durationFormatter.print(stats.totalTimeToday, null) : '0s'}">0h 0m</div>
+            <p class="text-xs text-mutedForeground mt-1">Total time tracked today</p>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="rounded-xl border border-border bg-card text-cardForeground shadow-sm flex flex-col p-6">
+            <div class="flex flex-row items-center justify-between pb-2">
+                <h3 class="tracking-tight text-sm font-medium">Time This Week</h3>
+                <i data-lucide="calendar" class="h-4 w-4 text-mutedForeground"></i>
+            </div>
+            <div class="text-2xl font-bold" th:text="${@durationFormatter.print(stats.totalTimeThisWeek, null) != 'N/A' ? @durationFormatter.print(stats.totalTimeThisWeek, null) : '0s'}">0h 0m</div>
+            <p class="text-xs text-mutedForeground mt-1">Total time tracked this week</p>
+        </div>
+    </div>
+
+    <!-- Active Sessions -->
+    <div th:if="${not #lists.isEmpty(activeSessions)}" class="mb-8 space-y-4">
+        <h2 class="text-xl font-semibold tracking-tight">Currently Tracking</h2>
+        <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div th:each="activeSession : ${activeSessions}" class="rounded-xl border border-primary/50 bg-primary/5 text-cardForeground shadow-sm p-5 flex flex-col relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-1 h-full bg-green-500"></div>
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 class="font-semibold leading-none tracking-tight mb-1" th:text="${activeSession.activity.name}">Activity Name</h3>
+                        <span class="inline-flex items-center rounded-full bg-accent px-2.5 py-0.5 text-xs font-semibold text-accentForeground" th:text="${activeSession.activity.category?.name ?: 'None'}">Category</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-green-500 font-mono font-medium text-sm" th:attr="data-start-time=${activeSession.startTime}">
+                        <i data-lucide="activity" class="w-4 h-4 animate-pulse"></i>
+                        <span th:id="'timer-' + ${activeSession.id}">00:00:00</span>
+                    </div>
+                </div>
+                <div class="mt-auto pt-4 border-t border-border/50">
+                    <form th:action="@{'/sessions/' + ${activeSession.activity.id} + '/stop'}" method="post">
+                        <button type="submit" class="w-full inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-destructive text-destructiveForeground hover:bg-destructive/90 h-9 gap-2">
+                            <i data-lucide="square" class="w-4 h-4 text-current fill-current"></i>
+                            Stop Tracking
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart Card -->
+    <div class="rounded-xl border border-border bg-card text-cardForeground shadow-sm p-6 w-full">
+        <div class="flex flex-col space-y-1.5 pb-6">
+            <h3 class="font-semibold leading-none tracking-tight">Categories (This Week)</h3>
+            <p class="text-sm text-mutedForeground">Time spent per category</p>
+        </div>
+        <div class="h-64">
+            <canvas id="categoryChart"></canvas>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        document.addEventListener('DOMContentLoaded', function() {
+            // Setup live timers
+            const timers = document.querySelectorAll("[data-start-time]");
+            timers.forEach(timer => {
+                const startTime = new Date(timer.getAttribute("data-start-time"));
+                const timerElement = timer.querySelector("span[id^='timer-']");
+
+                function updateTimer() {
+                    const now = new Date();
+                    const elapsed = now - startTime;
+                    const seconds = Math.floor((elapsed / 1000) % 60);
+                    const minutes = Math.floor((elapsed / (1000 * 60)) % 60);
+                    const hours = Math.floor((elapsed / (1000 * 60 * 60)) % 24);
+                    if(timerElement) {
+                        timerElement.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                    }
+                }
+                updateTimer();
+                setInterval(updateTimer, 1000);
+            });
+
+            // Setup chart
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+            const labels = /*[[${categoryNames}]]*/ [];
+            const data = /*[[${categoryTimes}]]*/ [];
+            
+            Chart.defaults.color = '#a1a1aa';
+            Chart.defaults.font.family = 'Inter';
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Time',
+                        data: data,
+                        backgroundColor: '#fafafa',
+                        borderRadius: 4,
+                        barThickness: 32,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#09090b',
+                            titleColor: '#fafafa',
+                            bodyColor: '#fafafa',
+                            borderColor: '#27272a',
+                            borderWidth: 1,
+                            padding: 12,
+                            displayColors: false,
+                            callbacks: {
+                                label: function(context) {
+                                    let totalSeconds = context.parsed.y;
+                                    let h = Math.floor(totalSeconds / 3600);
+                                    let m = Math.floor((totalSeconds % 3600) / 60);
+                                    let s = totalSeconds % 60;
+                                    let result = '';
+                                    if (h > 0) result += h + 'h ';
+                                    if (m > 0) result += m + 'm ';
+                                    result += s + 's';
+                                    return result.trim();
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { grid: { display: false, drawBorder: false } },
+                        y: { beginAtZero: true, grid: { color: '#27272a', drawBorder: false }, border: { display: false } }
+                    }
+                }
+            });
+        });
+        /*]]>*/
+    </script>
+</div>
+</body>
+</html>

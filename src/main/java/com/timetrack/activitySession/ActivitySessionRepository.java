@@ -11,4 +11,8 @@ import java.util.Optional;
 @Repository
 public interface ActivitySessionRepository extends JpaRepository<ActivitySession, Long> {
     Optional<ActivitySession> findByActivityIdAndEndTimeIsNull(Long activityId);
+    
+    java.util.List<ActivitySession> findByActivityCreatedByAndStartTimeAfter(com.timetrack.auth.User user, java.time.LocalDateTime startTime);
+    
+    java.util.List<ActivitySession> findByActivityCreatedByAndEndTimeIsNull(com.timetrack.auth.User user);
 }

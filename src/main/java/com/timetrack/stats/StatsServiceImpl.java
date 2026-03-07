@@ -19,9 +19,11 @@ import java.util.Map;
 @Service
 public class StatsServiceImpl implements StatsService {
     private final ActivityRepository activityRepository;
+    private final com.timetrack.activitySession.ActivitySessionRepository sessionRepository;
 
-    public StatsServiceImpl(ActivityRepository activityRepository) {
+    public StatsServiceImpl(ActivityRepository activityRepository, com.timetrack.activitySession.ActivitySessionRepository sessionRepository) {
         this.activityRepository = activityRepository;
+        this.sessionRepository = sessionRepository;
     }
 
     /**
@@ -87,6 +89,7 @@ public class StatsServiceImpl implements StatsService {
         }
         return totalTime;
     }
+
     /**
      * Returns a list of ActivitySessions of the Activity before the fromDate
      *
@@ -127,4 +130,34 @@ public class StatsServiceImpl implements StatsService {
         );
     }
 
+    @Override
+    public DashboardStatsDto getDashboardStats(com.timetrack.auth.User user) {
+        LocalDateTime startOfWeek = LocalDateTime.now().with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY)).withHour(0).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime startOfDay = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);
+        
+        List<ActivitySession> weekSessions = sessionRepository.findByActivityCreatedByAndStartTimeAfter(user, startOfWeek);
+        
+        Duration totalWeek = Duration.ZERO;
+        Duration totalToday = Duration.ZERO;
+        Map<String, Duration> categoryTimes = new HashMap<>();
+        
+        for (ActivitySession session : weekSessions) {
+            LocalDateTime end = session.getEndTime() != null ? session.getEndTime() : LocalDateTime.now();
+            Duration duration = Duration.between(session.getStartTime(), end);
+            
+            totalWeek = totalWeek.plus(duration);
+            
+            // Calculate time spent TODAY
+            LocalDateTime startForToday = session.getStartTime().isBefore(startOfDay) ? startOfDay : session.getStartTime();
+            if (!end.isBefore(startOfDay)) {
+                Duration durationToday = Duration.between(startForToday, end);
+                totalToday = totalToday.plus(durationToday);
+            }
+            
+            String catName = session.getActivity().getCategory() != null ? session.getActivity().getCategory().getName() : "Uncategorized";
+            categoryTimes.put(catName, categoryTimes.getOrDefault(catName, Duration.ZERO).plus(duration));
+        }
+        
+        return new DashboardStatsDto(totalToday, totalWeek, categoryTimes);
+    }
 }
