@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{fragments/layout :: layout('Goals - Timetrack', ~{::div})}">
+<body>
+<div class="max-w-6xl mx-auto">
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-3xl font-bold tracking-tight">Goals</h1>
+            <p class="text-mutedForeground mt-2">Set time targets for your activities and categories.</p>
+        </div>
+        <button type="button" onclick="document.getElementById('goalModal').classList.remove('hidden')" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-primary text-primaryForeground hover:bg-primary/90 h-10 px-4 py-2 gap-2">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            New Goal
+        </button>
+    </div>
+
+    <div th:if="${goals.isEmpty()}" class="flex flex-col items-center justify-center p-12 text-center rounded-xl border border-dashed border-border">
+        <div class="w-12 h-12 rounded-full bg-accent flex items-center justify-center mb-4">
+            <i data-lucide="target" class="w-6 h-6 text-mutedForeground"></i>
+        </div>
+        <h3 class="text-lg font-medium">No goals yet</h3>
+        <p class="text-sm text-mutedForeground mt-1 mb-4">You haven't set any time tracking goals.</p>
+        <button type="button" onclick="document.getElementById('goalModal').classList.remove('hidden')" class="inline-flex items-center justify-center rounded-md text-sm font-medium bg-primary text-primaryForeground hover:bg-primary/90 h-9 px-4">
+            Create your first goal
+        </button>
+    </div>
+
+    <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div th:each="goal : ${goals}" class="rounded-xl border border-border bg-card text-cardForeground shadow-sm p-6 flex flex-col relative overflow-hidden group">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <h3 class="font-semibold text-lg tracking-tight" th:text="${goal.targetName}">Target Name</h3>
+                    <p class="text-sm text-mutedForeground" th:text="${goal.period}">WEEKLY</p>
+                </div>
+                <form th:action="@{'/goals/' + ${goal.id}}" th:method="delete" onsubmit="return confirm('Delete this goal?');">
+                    <button type="submit" class="opacity-0 group-hover:opacity-100 transition-opacity inline-flex items-center justify-center rounded-md text-sm font-medium hover:bg-destructive hover:text-destructiveForeground h-8 w-8 text-mutedForeground">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                </form>
+            </div>
+            
+            <div class="mt-4 mb-2 flex justify-between text-sm font-medium">
+                <span th:text="${@durationFormatter.print(goal.currentDuration, null)}">0h</span>
+                <span class="text-mutedForeground" th:text="${@durationFormatter.print(goal.targetDuration, null)}">10h</span>
+            </div>
+            <div class="h-2 w-full bg-accent rounded-full overflow-hidden">
+                <div class="h-full bg-primary transition-all duration-500" th:style="'width: ' + ${goal.progressPercentage} + '%'" th:classappend="${goal.progressPercentage >= 100 ? 'bg-green-500' : ''}"></div>
+            </div>
+            <p class="text-xs text-right mt-2 text-mutedForeground" th:if="${goal.progressPercentage >= 100}">Goal reached! 🎉</p>
+        </div>
+    </div>
+
+    <!-- Goal Modal -->
+    <div id="goalModal" class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm hidden flex items-center justify-center">
+        <div class="bg-card text-cardForeground border border-border shadow-lg rounded-xl max-w-md w-full p-6">
+            <h2 class="text-xl font-bold tracking-tight mb-4">Create Goal</h2>
+            
+            <form th:action="@{/goals}" method="post">
+                <div class="space-y-4">
+                    <div class="grid gap-2">
+                        <label for="period" class="text-sm font-medium leading-none">Period</label>
+                        <select id="period" name="period" required class="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                            <option value="WEEKLY" class="bg-card">Weekly</option>
+                            <option value="MONTHLY" class="bg-card">Monthly</option>
+                        </select>
+                    </div>
+                    
+                    <div class="grid gap-2">
+                        <label for="targetType" class="text-sm font-medium leading-none">Target Type</label>
+                        <select id="targetType" onchange="toggleTargetType()" class="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                            <option value="all" class="bg-card">Everything (Global)</option>
+                            <option value="category" class="bg-card">Specific Category</option>
+                            <option value="activity" class="bg-card">Specific Activity</option>
+                        </select>
+                    </div>
+
+                    <div id="categoryDiv" class="grid gap-2 hidden">
+                        <label for="categoryId" class="text-sm font-medium leading-none">Category</label>
+                        <select id="categoryId" name="categoryId" class="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                            <option value="" class="bg-card">Select a category...</option>
+                            <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}" class="bg-card"></option>
+                        </select>
+                    </div>
+                    
+                    <div id="activityDiv" class="grid gap-2 hidden">
+                        <label for="activityId" class="text-sm font-medium leading-none">Activity</label>
+                        <select id="activityId" name="activityId" class="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                            <option value="" class="bg-card">Select an activity...</option>
+                            <option th:each="act : ${activities}" th:value="${act.id}" th:text="${act.name}" class="bg-card"></option>
+                        </select>
+                    </div>
+
+                    <div class="grid gap-2">
+                        <label for="hours" class="text-sm font-medium leading-none">Target Hours</label>
+                        <input type="number" id="hours" name="hours" min="1" max="999" required placeholder="e.g. 10" class="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                    </div>
+                </div>
+                
+                <div class="flex gap-4 mt-6">
+                    <button type="button" onclick="document.getElementById('goalModal').classList.add('hidden')" class="flex-1 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-border bg-transparent hover:bg-accent hover:text-accentForeground h-10 px-4 py-2">
+                        Cancel
+                    </button>
+                    <button type="submit" class="flex-1 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-primary text-primaryForeground hover:bg-primary/90 h-10 px-4 py-2">
+                        Create
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+        function toggleTargetType() {
+            const val = document.getElementById('targetType').value;
+            const catDiv = document.getElementById('categoryDiv');
+            const actDiv = document.getElementById('activityDiv');
+            const catSelect = document.getElementById('categoryId');
+            const actSelect = document.getElementById('activityId');
+            
+            catDiv.classList.add('hidden');
+            actDiv.classList.add('hidden');
+            catSelect.value = '';
+            actSelect.value = '';
+            
+            if (val === 'category') catDiv.classList.remove('hidden');
+            else if (val === 'activity') actDiv.classList.remove('hidden');
+        }
+    </script>
+</div>
+</body>
+</html>
