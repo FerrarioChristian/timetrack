@@ -105,4 +105,36 @@ public class ActivitySessionServiceImpl implements ActivitySessionService {
             return activityMapper.toActivityViewDto(activity, isSessionActive, sessionStartTime);
         }).collect(Collectors.toList());
     }
+
+    @Override
+    public void addManualSession(Long activityId, LocalDateTime startTime, LocalDateTime endTime) {
+        if (startTime == null || endTime == null || startTime.isAfter(endTime)) {
+            throw new IllegalArgumentException("Invalid start or end time");
+        }
+        Activity activity = activityRepository.findById(activityId).orElseThrow(() -> new IllegalArgumentException("Activity not found"));
+        ActivitySession session = new ActivitySession();
+        session.setActivity(activity);
+        session.setStartTime(startTime);
+        session.setEndTime(endTime);
+        activitySessionRepository.save(session);
+    }
+
+    @Override
+    public void updateSession(Long sessionId, LocalDateTime startTime, LocalDateTime endTime) {
+        if (startTime == null || endTime == null || startTime.isAfter(endTime)) {
+            throw new IllegalArgumentException("Invalid start or end time");
+        }
+        ActivitySession session = activitySessionRepository.findById(sessionId).orElseThrow(() -> new IllegalArgumentException("Session not found"));
+        session.setStartTime(startTime);
+        session.setEndTime(endTime);
+        activitySessionRepository.save(session);
+    }
+
+    @Override
+    public void deleteSession(Long sessionId) {
+        if (!activitySessionRepository.existsById(sessionId)) {
+            throw new IllegalArgumentException("Session not found");
+        }
+        activitySessionRepository.deleteById(sessionId);
+    }
 }

@@ -156,6 +156,14 @@ public class Activity {
         this.createdBy = createdBy;
     }
 
+    public boolean hasActiveSession() {
+        if (sessions == null) return false;
+        for (ActivitySession session : sessions) {
+            if (session.getEndTime() == null) return true;
+        }
+        return false;
+    }
+
     @Override
     public String toString() {
         return "Activity{" + "id=" + id + ", name='" + name + '\'' + ", description='" + description + '\'' + ", category=" + category + ", activityType=" + activityType + ", time=" + time + '}';

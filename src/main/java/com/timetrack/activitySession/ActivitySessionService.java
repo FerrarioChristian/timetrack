@@ -14,4 +14,7 @@ public interface ActivitySessionService {
     boolean isSessionActive(Long activityId);
     Optional<ActivitySession> getActiveSession(Long activityId);
     List<ActivityViewDto> getAllActivitiesWithSessionStatus();
+    void addManualSession(Long activityId, java.time.LocalDateTime startTime, java.time.LocalDateTime endTime);
+    void updateSession(Long sessionId, java.time.LocalDateTime startTime, java.time.LocalDateTime endTime);
+    void deleteSession(Long sessionId);
 }
