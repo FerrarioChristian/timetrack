@@ -1,19 +1,121 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link th:href="@{/styles/bootstrap.min.css}" rel="stylesheet"/>
-    <link th:href="@{/styles/main.css}" rel="stylesheet"/>
-    <link th:href="@{/styles/list.css}" rel="stylesheet"/>
-    <title>Activity List</title>
-    <script>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{fragments/layout :: layout('Activities - Timetrack', ~{::div})}">
+<body>
+<div class="max-w-6xl mx-auto">
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-3xl font-bold tracking-tight">Activities</h1>
+            <p class="text-mutedForeground mt-2">Manage your activities and track time.</p>
+        </div>
+        <a th:href="@{/activities/new}" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-primary text-primaryForeground hover:bg-primary/90 h-10 px-4 py-2 gap-2">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            New Activity
+        </a>
+    </div>
+
+    <div th:if="${activities.isEmpty()}" class="flex flex-col items-center justify-center p-12 text-center rounded-xl border border-dashed border-border">
+        <div class="w-12 h-12 rounded-full bg-accent flex items-center justify-center mb-4">
+            <i data-lucide="inbox" class="w-6 h-6 text-mutedForeground"></i>
+        </div>
+        <h3 class="text-lg font-medium">No activities</h3>
+        <p class="text-sm text-mutedForeground mt-1 mb-4">You haven't created any activities yet.</p>
+        <a th:href="@{/activities/new}" class="inline-flex items-center justify-center rounded-md text-sm font-medium bg-primary text-primaryForeground hover:bg-primary/90 h-9 px-4">
+            Create your first activity
+        </a>
+    </div>
+
+    <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div th:each="activityView : ${activities}" class="group rounded-xl border border-border bg-card text-cardForeground shadow-sm hover:border-zinc-700 transition-colors flex flex-col cursor-pointer overflow-hidden" th:data-url="@{/activities/{id}(id=${activityView.id})}" onclick="window.location.href=this.getAttribute('data-url')">
+            
+            <div class="p-6 flex-1">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <h3 class="font-semibold leading-none tracking-tight mb-2" th:text="${activityView.name}">Activity Name</h3>
+                        <div class="flex items-center gap-2 text-sm text-mutedForeground">
+                            <span class="inline-flex items-center rounded-full bg-accent px-2.5 py-0.5 text-xs font-semibold text-accentForeground transition-colors" th:text="${activityView.categoryName != null ? activityView.categoryName : 'None'}">Category</span>
+                        </div>
+                    </div>
+                    <div class="flex gap-1" onclick="event.stopPropagation()">
+                        <a th:href="@{'/activities/' + ${activityView.id} + '/edit'}" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accentForeground h-8 w-8 text-mutedForeground">
+                            <i data-lucide="pencil" class="w-4 h-4"></i>
+                        </a>
+                        <form th:action="@{'/activities/' + ${activityView.id}}" th:method="delete" onsubmit="return confirm('Are you sure you want to delete this activity?');">
+                            <button type="submit" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-destructive hover:text-destructiveForeground h-8 w-8 text-mutedForeground">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+                <div class="mt-6 flex items-center gap-3">
+                    <i data-lucide="clock" class="w-4 h-4 text-mutedForeground"></i>
+                    <div class="text-sm font-medium" th:if="${activityView.sessionActive}" th:attr="data-start-time=${activityView.sessionStartTime}">
+                        <span th:id="'timer-' + ${activityView.id}" class="text-green-500 font-mono">00:00:00</span>
+                        <span class="text-mutedForeground"> / </span>
+                        <span th:text="${activityView.getTimeString()}" class="text-mutedForeground"></span>
+                    </div>
+                    <div class="text-sm font-medium text-mutedForeground" th:if="${!activityView.sessionActive}" th:text="${activityView.getTimeString()}">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="p-4 border-t border-border bg-zinc-900/50" onclick="event.stopPropagation()">
+                <div th:if="${!activityView.sessionActive}" class="flex gap-2">
+                    <form th:action="@{'/sessions/' + ${activityView.id} + '/start'}" method="post" class="flex-1">
+                        <button type="submit" class="w-full inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-primary text-primaryForeground hover:bg-primary/90 h-9 gap-2">
+                            <i data-lucide="play" class="w-4 h-4"></i>
+                            Start
+                        </button>
+                    </form>
+                    <button type="button" th:data-id="${activityView.id}" th:data-name="${activityView.name}" onclick="startPomodoro(this.getAttribute('data-id'), this.getAttribute('data-name'))" class="flex-1 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-border bg-transparent hover:bg-accent hover:text-accentForeground h-9 gap-2">
+                        <i data-lucide="timer" class="w-4 h-4 text-orange-500"></i>
+                        Pomodoro
+                    </button>
+                </div>
+                <form th:if="${activityView.sessionActive}" th:action="@{'/sessions/' + ${activityView.id} + '/stop'}" method="post">
+                    <button type="submit" class="w-full inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-destructive text-destructiveForeground hover:bg-destructive/90 h-9 gap-2">
+                        <i data-lucide="square" class="w-4 h-4 text-current fill-current"></i>
+                        Stop Session
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pomodoro Modal -->
+    <div id="pomodoroModal" class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm hidden flex items-center justify-center">
+        <div class="bg-card text-cardForeground border border-border shadow-lg rounded-xl max-w-md w-full p-8 flex flex-col items-center">
+            <h2 id="pomodoroTitle" class="text-xl font-bold tracking-tight mb-2 text-center">Focus Time</h2>
+            <p class="text-sm text-mutedForeground mb-8">Stay focused for 25 minutes.</p>
+            
+            <div class="relative w-48 h-48 flex items-center justify-center mb-8">
+                <svg class="absolute inset-0 w-full h-full text-zinc-800" viewBox="0 0 100 100">
+                    <circle class="stroke-current" stroke-width="4" cx="50" cy="50" r="48" fill="transparent"></circle>
+                </svg>
+                <svg class="absolute inset-0 w-full h-full text-orange-500 transition-all duration-1000 linear" viewBox="0 0 100 100">
+                    <circle id="pomodoroProgress" class="stroke-current" stroke-width="4" cx="50" cy="50" r="48" fill="transparent" stroke-dasharray="301.59" stroke-dashoffset="0" stroke-linecap="round" transform="rotate(-90 50 50)"></circle>
+                </svg>
+                <div id="pomodoroTimer" class="text-5xl font-mono font-bold tracking-tighter">25:00</div>
+            </div>
+            
+            <div class="flex gap-4 w-full">
+                <button type="button" onclick="cancelPomodoro()" class="flex-1 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-border bg-transparent hover:bg-accent hover:text-accentForeground h-10 px-4 py-2">
+                    Cancel
+                </button>
+                <button id="pomodoroSubmitBtn" type="button" onclick="submitPomodoro()" class="flex-1 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-primary text-primaryForeground hover:bg-primary/90 h-10 px-4 py-2 hidden">
+                    Complete
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
         document.addEventListener("DOMContentLoaded", () => {
             const timers = document.querySelectorAll("[data-start-time]");
 
             timers.forEach(timer => {
                 const startTime = new Date(timer.getAttribute("data-start-time"));
-                const timerElement = timer.querySelector("span");
+                const timerElement = timer.querySelector("span[id^='timer-']");
 
                 function updateTimer() {
                     const now = new Date();
@@ -22,67 +124,97 @@
                     const minutes = Math.floor((elapsed / (1000 * 60)) % 60);
                     const hours = Math.floor((elapsed / (1000 * 60 * 60)) % 24);
 
-                    timerElement.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                    if(timerElement) {
+                        timerElement.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                    }
                 }
 
                 updateTimer();
                 setInterval(updateTimer, 1000);
             });
         });
+
+        let pomodoroInterval;
+        let pomodoroTimeRemaining;
+        let currentPomodoroActivityId;
+        let pomodoroStartTimeStr;
+        const POMODORO_DURATION = 25 * 60;
+
+        function startPomodoro(activityId, activityName) {
+            currentPomodoroActivityId = activityId;
+            pomodoroTimeRemaining = POMODORO_DURATION;
+            document.getElementById('pomodoroTitle').textContent = activityName;
+            document.getElementById('pomodoroModal').classList.remove('hidden');
+            document.getElementById('pomodoroSubmitBtn').classList.add('hidden');
+            document.getElementById('pomodoroTimer').classList.remove('text-green-500');
+            
+            pomodoroStartTimeStr = new Date().toISOString();
+            
+            updatePomodoroDisplay();
+            
+            clearInterval(pomodoroInterval);
+            pomodoroInterval = setInterval(() => {
+                pomodoroTimeRemaining--;
+                updatePomodoroDisplay();
+                
+                if (pomodoroTimeRemaining <= 0) {
+                    clearInterval(pomodoroInterval);
+                    timerComplete();
+                }
+            }, 1000);
+        }
+
+        function updatePomodoroDisplay() {
+            const minutes = Math.floor(pomodoroTimeRemaining / 60);
+            const seconds = pomodoroTimeRemaining % 60;
+            document.getElementById('pomodoroTimer').textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            const circle = document.getElementById('pomodoroProgress');
+            const circumference = 2 * Math.PI * 48;
+            const offset = circumference - (pomodoroTimeRemaining / POMODORO_DURATION) * circumference;
+            circle.style.strokeDashoffset = offset;
+        }
+
+        function cancelPomodoro() {
+            clearInterval(pomodoroInterval);
+            document.getElementById('pomodoroModal').classList.add('hidden');
+        }
+
+        function timerComplete() {
+            document.getElementById('pomodoroTimer').textContent = "00:00";
+            document.getElementById('pomodoroTimer').classList.add('text-green-500');
+            document.getElementById('pomodoroSubmitBtn').classList.remove('hidden');
+            document.getElementById('pomodoroTitle').textContent = "Pomodoro Complete!";
+        }
+
+        function submitPomodoro() {
+            const endTimeStr = new Date().toISOString();
+            
+            const form = document.createElement('form');
+            form.method = 'post';
+            form.action = '/sessions/' + currentPomodoroActivityId + '/manual';
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = /*[[${_csrf.parameterName}]]*/ '_csrf';
+            csrfInput.value = /*[[${_csrf.token}]]*/ '';
+            form.appendChild(csrfInput);
+            
+            const startInput = document.createElement('input');
+            startInput.type = 'hidden';
+            startInput.name = 'startTime';
+            startInput.value = pomodoroStartTimeStr;
+            form.appendChild(startInput);
+            
+            const endInput = document.createElement('input');
+            endInput.type = 'hidden';
+            endInput.name = 'endTime';
+            endInput.value = endTimeStr;
+            form.appendChild(endInput);
+            
+            document.body.appendChild(form);
+            form.submit();
+        }
     </script>
-</head>
-<body>
-<div class="container flex flex-column">
-    <div class="flex flex-rows justify-content-center align-items-center position-relative w-100">
-        <h1>Activities</h1>
-        <form th:action="@{/logout}" method="post" class="position-absolute end-0">
-            <button type="submit" class="btn btn-outline-danger">Logout</button>
-        </form>
-    </div>
-
-    <div class="flex">
-        <a th:href="@{/activities/new}" class="btn btn-primary">&#xFF0B Track activity</a>
-    </div>
-
-    <div th:if="${activities.isEmpty()}" class="empty-list">
-        <p>No activities available. Please add some!</p>
-    </div>
-
-    <div th:each="activity : ${activities}" class="activity" th:attr="onclick=|window.location.href='/activities/${activity.id}'|" style="cursor: pointer;">
-            <div class="activity-info-container">
-                <h4 th:text="${activity.name}" class="activity-name lh-1"></h4>
-                <p th:text="${activity.categoryName}" class="activity-category lh-1"></p>
-            </div>
-            <div th:if="${activity.isSessionActive}" th:attr="data-start-time=${activity.sessionStartTime}">
-                <span id="timer-[[${activityView.activity.id}]]"></span>
-                <span th:text="' / ' + ${activity.getTimeString()}"></span>
-            </div>
-            <div class="activity-actions">
-
-                <form th:if="${!activity.isSessionActive}" th:action="@{'/sessions/' + ${activity.id} + '/start'}"
-                      method="post">
-                    <button type="submit" class="btn btn-success">Start Session</button>
-                </form>
-                <form th:if="${activity.isSessionActive}" th:action="@{'/sessions/' + ${activity.id} + '/stop'}"
-                      method="post">
-                    <button type="submit" class="btn btn-danger">Stop Session</button>
-                </form>
-                <a th:href="@{'/activities/' + ${activity.id} + '/edit'}" class="btn btn-outline-warning">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                         class="bi bi-pencil-fill" viewBox="0 0 16 16">
-                        <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.5.5 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11z"/>
-                    </svg>
-                </a>
-                <form th:action="@{'/activities/' + ${activity.id}}" th:method="delete">
-                    <button id="delete" type="submit" class="btn btn-outline-danger">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                             class="bi bi-trash-fill" viewBox="0 0 16 16">
-                            <path d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5M8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5m3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0"/>
-                        </svg>
-                    </button>
-                </form>
-            </div>
-    </div>
 </div>
 </body>
 </html>
