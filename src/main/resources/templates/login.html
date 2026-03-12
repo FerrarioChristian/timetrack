@@ -56,6 +56,21 @@
                 Sign In
             </button>
         </form>
+
+        <div class="relative my-4">
+            <div class="absolute inset-0 flex items-center">
+                <span class="w-full border-t border-border"></span>
+            </div>
+            <div class="relative flex justify-center text-xs uppercase">
+                <span class="bg-card px-2 text-mutedForeground">Demo Access</span>
+            </div>
+        </div>
+
+        <button type="button" onclick="loginDemo()" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-border bg-accent/40 hover:bg-accent text-accentForeground h-10 w-full gap-2">
+            <i data-lucide="sparkles" class="w-4 h-4 text-emerald-400"></i>
+            Accedi come Demo
+        </button>
+        <p class="text-xs text-center text-mutedForeground mt-2 font-mono">Credenziali: demo / demo1234</p>
     </div>
     
     <div class="flex items-center justify-center p-6 pt-0 text-sm">
@@ -64,6 +79,13 @@
     </div>
 </div>
 
-<script>lucide.createIcons();</script>
+<script>
+    lucide.createIcons();
+    function loginDemo() {
+        document.getElementById('username').value = 'demo';
+        document.getElementById('password').value = 'demo1234';
+        document.querySelector('form').submit();
+    }
+</script>
 </body>
 </html>

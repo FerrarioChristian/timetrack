@@ -31,12 +31,21 @@ A modern web application designed for personal time management and productivity 
 
 ## Getting Started
 
-### Prerequisites
+### Option 1: Run with Docker (Recommended)
+The easiest way to run the entire stack (Application + PostgreSQL database) with zero configuration:
+```bash
+docker compose up -d
+```
+The app will build and start automatically at `http://localhost:8080`.
+
+### Option 2: Run Locally with Maven
+
+#### Prerequisites
 - Java Development Kit (JDK) 23 or higher
 - PostgreSQL Database installed and running
 - Maven (Optional, the project includes the Maven Wrapper `mvnw`)
 
-### Setup & Run
+#### Setup & Run
 
 1. **Clone the repository**
    ```bash
@@ -63,3 +72,10 @@ A modern web application designed for personal time management and productivity 
 
 5. **Access the App**
    Open your browser and navigate to `http://localhost:8080`
+
+## Demo Account
+For public demos and recruiters, the application auto-seeds a realistic demo profile upon first startup:
+- **Username:** `demo`
+- **Password:** `demo1234`
+- Or simply click **"Accedi come Demo"** directly on the login page for instant access with populated charts, goals, and history.
+
