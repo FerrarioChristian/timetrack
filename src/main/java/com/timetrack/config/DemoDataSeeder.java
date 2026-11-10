@@ -11,6 +11,7 @@ import com.timetrack.category.Category;
 import com.timetrack.category.CategoryRepository;
 import com.timetrack.goal.Goal;
 import com.timetrack.goal.GoalRepository;
+import com.timetrack.routine.*;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -37,19 +38,25 @@ public class DemoDataSeeder implements CommandLineRunner {
     private final ActivitySessionRepository sessionRepository;
     private final GoalRepository goalRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RoutineRepository routineRepository;
+    private final RoutineCompletionRepository routineCompletionRepository;
 
     public DemoDataSeeder(UserRepository userRepository,
                           CategoryRepository categoryRepository,
                           ActivityRepository activityRepository,
                           ActivitySessionRepository sessionRepository,
                           GoalRepository goalRepository,
-                          PasswordEncoder passwordEncoder) {
+                          PasswordEncoder passwordEncoder,
+                          RoutineRepository routineRepository,
+                          RoutineCompletionRepository routineCompletionRepository) {
         this.userRepository = userRepository;
         this.categoryRepository = categoryRepository;
         this.activityRepository = activityRepository;
         this.sessionRepository = sessionRepository;
         this.goalRepository = goalRepository;
         this.passwordEncoder = passwordEncoder;
+        this.routineRepository = routineRepository;
+        this.routineCompletionRepository = routineCompletionRepository;
     }
 
     @Override
@@ -60,6 +67,7 @@ public class DemoDataSeeder implements CommandLineRunner {
             demoUser = initDemoUserAndStructure();
         }
         ensureFreshDemoSessions(demoUser);
+        ensureDemoRoutines(demoUser);
     }
 
     @Transactional
@@ -212,5 +220,101 @@ public class DemoDataSeeder implements CommandLineRunner {
         session.setStartTime(start);
         session.setEndTime(end);
         sessionRepository.save(session);
+    }
+
+    @Transactional
+    public void ensureDemoRoutines(User demoUser) {
+        if (routineRepository.countByUser(demoUser) > 0) {
+            return;
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+
+        // 1. Pulizia Bagno
+        Routine lavandinoBagno = createRoutine(demoUser, "Lavandino Bagno", "Pulizia e sanificazione lavandino e specchio",
+                "Pulizia Bagno", 3, RecurrenceType.DAYS_INTERVAL, 3, null, now.minusDays(3));
+
+        Routine wc = createRoutine(demoUser, "WC", "Igienizzazione completa water",
+                "Pulizia Bagno", 3, RecurrenceType.DAYS_INTERVAL, 4, null, now.minusDays(5)); // overdue by 1 day!
+
+        Routine bidet = createRoutine(demoUser, "Bidet", "Pulizia e disinfezione bidet",
+                "Pulizia Bagno", 2, RecurrenceType.DAYS_INTERVAL, 4, null, now.minusDays(4)); // due today
+
+        createRoutine(demoUser, "Doccia", "Lavaggio fondo e box doccia",
+                "Pulizia Bagno", 8, RecurrenceType.DAYS_INTERVAL, 10, null, now.minusDays(6));
+
+        createRoutine(demoUser, "Doccino", "Decalcificazione e pulizia doccino",
+                "Pulizia Bagno", 3, RecurrenceType.DAYS_INTERVAL, 14, null, now.minusDays(10));
+
+        createRoutine(demoUser, "Portasapone Doccia", "Lavaggio e rimozione residui sapone",
+                "Pulizia Bagno", 2, RecurrenceType.DAYS_INTERVAL, 14, null, now.minusDays(12));
+
+        createRoutine(demoUser, "Pareti Doccia", "Trattamento anticalcare vetri e piastrelle",
+                "Pulizia Bagno", 8, RecurrenceType.DAYS_INTERVAL, 21, null, now.minusDays(15));
+
+        createRoutine(demoUser, "Tappeto Bagno", "Lavaggio in lavatrice tappeto",
+                "Pulizia Bagno", 5, RecurrenceType.DAYS_INTERVAL, 28, null, now.minusDays(20));
+
+        // 2. Cucina & Casa
+        Routine lavandinoCucina = createRoutine(demoUser, "Lavandino Cucina", "Sgrassatura vasca e sgombero piano",
+                "Cucina & Casa", 4, RecurrenceType.DAYS_INTERVAL, 3, null, now.minusDays(3)); // due today
+
+        createRoutine(demoUser, "Microonde", "Pulizia interna e piatto girevole",
+                "Cucina & Casa", 8, RecurrenceType.DAYS_INTERVAL, 14, null, now.minusDays(14)); // due today
+
+        createRoutine(demoUser, "Frigorifero", "Controllo scadenze e pulizia ripiani",
+                "Cucina & Casa", 15, RecurrenceType.DAYS_INTERVAL, 30, null, now.minusDays(22));
+
+        // 3. Cura Personale
+        Routine barba = createRoutine(demoUser, "Regolazione Barba", "Rifinitura contorni e regolazione lunghezza",
+                "Cura Personale", 12, RecurrenceType.DAYS_INTERVAL, 3, null, now.minusDays(3)); // due today
+
+        createRoutine(demoUser, "Taglio Unghie", "Manicure e limatura",
+                "Cura Personale", 8, RecurrenceType.DAYS_INTERVAL, 7, null, now.minusDays(2));
+
+        // 4. Dispositivi & Salute
+        Routine dispositivi = createRoutine(demoUser, "Disinfettare Dispositivi", "Disinfezione alcolica smartphone, auricolari e tastiera",
+                "Dispositivi & Salute", 8, RecurrenceType.DAYS_INTERVAL, 7, null, now.minusDays(7)); // due today
+
+        createRoutine(demoUser, "Riempire Omega3 & Integratori", "Preparazione dosatore settimanale",
+                "Dispositivi & Salute", 2, RecurrenceType.WEEKLY_DAYS, null, "SUNDAY", now.minusDays(7));
+
+        // Seed some historical completions for analytics
+        seedHistoricalCompletion(lavandinoBagno, now.minusDays(3), 190, true);
+        seedHistoricalCompletion(lavandinoBagno, now.minusDays(6), 175, true);
+        seedHistoricalCompletion(lavandinoBagno, now.minusDays(9), 210, true);
+
+        seedHistoricalCompletion(bidet, now.minusDays(4), 110, true);
+        seedHistoricalCompletion(bidet, now.minusDays(8), 125, true);
+
+        seedHistoricalCompletion(lavandinoCucina, now.minusDays(3), 230, true);
+        seedHistoricalCompletion(lavandinoCucina, now.minusDays(6), 245, true);
+
+        seedHistoricalCompletion(barba, now.minusDays(3), 710, true);
+        seedHistoricalCompletion(barba, now.minusDays(6), 690, true);
+
+        seedHistoricalCompletion(dispositivi, now.minusDays(7), 460, true);
+    }
+
+    private Routine createRoutine(User user, String name, String description, String sessionGroup,
+                                  int estimatedMinutes, RecurrenceType recurrenceType, Integer frequencyDays,
+                                  String targetDaysOfWeek, LocalDateTime lastCompletedAt) {
+        Routine routine = new Routine();
+        routine.setUser(user);
+        routine.setName(name);
+        routine.setDescription(description);
+        routine.setSessionGroup(sessionGroup);
+        routine.setEstimatedMinutes(estimatedMinutes);
+        routine.setRecurrenceType(recurrenceType);
+        routine.setFrequencyDays(frequencyDays);
+        routine.setTargetDaysOfWeek(targetDaysOfWeek);
+        routine.setLastCompletedAt(lastCompletedAt);
+        routine.setCreatedAt(lastCompletedAt != null ? lastCompletedAt.minusDays(30) : LocalDateTime.now().minusDays(30));
+        return routineRepository.save(routine);
+    }
+
+    private void seedHistoricalCompletion(Routine routine, LocalDateTime completedAt, int durationSeconds, boolean onTime) {
+        RoutineCompletion completion = new RoutineCompletion(routine, completedAt, durationSeconds, onTime);
+        routineCompletionRepository.save(completion);
     }
 }

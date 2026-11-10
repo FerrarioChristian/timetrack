@@ -7,6 +7,9 @@ import com.timetrack.stats.DashboardStatsDto;
 import com.timetrack.stats.StatsService;
 import com.timetrack.activitySession.ActivitySession;
 import com.timetrack.activitySession.ActivitySessionRepository;
+import com.timetrack.routine.RoutineService;
+import com.timetrack.routine.RoutineStatsDto;
+import com.timetrack.routine.RoutineViewDto;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,12 +22,18 @@ public class DashboardController {
     private final UserService userService;
     private final ActivitySessionRepository sessionRepository;
     private final com.timetrack.config.DemoDataSeeder demoDataSeeder;
+    private final RoutineService routineService;
 
-    public DashboardController(StatsService statsService, UserService userService, ActivitySessionRepository sessionRepository, com.timetrack.config.DemoDataSeeder demoDataSeeder) {
+    public DashboardController(StatsService statsService,
+                               UserService userService,
+                               ActivitySessionRepository sessionRepository,
+                               com.timetrack.config.DemoDataSeeder demoDataSeeder,
+                               RoutineService routineService) {
         this.statsService = statsService;
         this.userService = userService;
         this.sessionRepository = sessionRepository;
         this.demoDataSeeder = demoDataSeeder;
+        this.routineService = routineService;
     }
 
     @GetMapping("/")
@@ -51,6 +60,11 @@ public class DashboardController {
         
         model.addAttribute("categoryNames", stats.categoryTimesThisWeek().keySet());
         model.addAttribute("categoryTimes", stats.categoryTimesThisWeek().values().stream().map(d -> d.getSeconds()).toList());
+
+        RoutineStatsDto routineStats = routineService.getStats(user);
+        List<RoutineViewDto> dueRoutines = routineService.getDueOrOverdueRoutines(user);
+        model.addAttribute("routineStats", routineStats);
+        model.addAttribute("dueRoutines", dueRoutines);
 
         return "dashboard";
     }

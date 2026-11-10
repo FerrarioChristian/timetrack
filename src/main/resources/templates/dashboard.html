@@ -27,6 +27,19 @@
             <div class="text-2xl font-bold" th:text="${@durationFormatter.print(stats.totalTimeThisWeek, null) != 'N/A' ? @durationFormatter.print(stats.totalTimeThisWeek, null) : '0s'}">0h 0m</div>
             <p class="text-xs text-mutedForeground mt-1">Total time tracked this week</p>
         </div>
+
+        <!-- Card 3: Routines -->
+        <a th:href="@{/routines}" class="rounded-xl border border-border bg-card text-cardForeground shadow-sm flex flex-col p-6 hover:border-zinc-700 transition-colors group">
+            <div class="flex flex-row items-center justify-between pb-2">
+                <h3 class="tracking-tight text-sm font-medium">Routines Today</h3>
+                <i data-lucide="repeat" class="h-4 w-4 text-emerald-400 group-hover:rotate-45 transition-transform"></i>
+            </div>
+            <div class="text-2xl font-bold flex items-baseline gap-2">
+                <span th:text="${routineStats.dueTodayCount}">0</span>
+                <span class="text-xs font-normal text-mutedForeground" th:text="${'da fare (' + routineStats.totalEstimatedMinutesDueToday + ' min)'}">da fare (0 min)</span>
+            </div>
+            <p class="text-xs text-mutedForeground mt-1" th:text="${routineStats.overdueCount > 0 ? routineStats.overdueCount + ' in ritardo • Apri routines' : (routineStats.completedTodayCount > 0 ? routineStats.completedTodayCount + ' completate oggi' : 'Gestisci le tue abitudini cicliche')}">Routines da completare</p>
+        </a>
     </div>
 
     <!-- Active Sessions -->

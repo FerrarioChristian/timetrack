@@ -77,6 +77,10 @@
                 <i data-lucide="target" class="h-4 w-4"></i>
                 Goals
             </a>
+            <a th:href="@{/routines}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-mutedForeground transition-all hover:text-foreground hover:bg-accent hover:text-accentForeground" th:classappend="${#strings.startsWith(requestURI, '/routines')} ? 'bg-accent text-accentForeground font-medium' : ''">
+                <i data-lucide="repeat" class="h-4 w-4"></i>
+                Routines
+            </a>
             <a th:href="@{/categories}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-mutedForeground transition-all hover:text-foreground hover:bg-accent hover:text-accentForeground" th:classappend="${#strings.startsWith(requestURI, '/categories')} ? 'bg-accent text-accentForeground font-medium' : ''">
                 <i data-lucide="tags" class="h-4 w-4"></i>
                 Categories
@@ -98,6 +102,7 @@
             <div class="flex gap-4">
                 <a th:href="@{/}" class="text-mutedForeground hover:text-primary"><i data-lucide="layout-dashboard" class="w-5 h-5"></i></a>
                 <a th:href="@{/activities}" class="text-mutedForeground hover:text-primary"><i data-lucide="list" class="w-5 h-5"></i></a>
+                <a th:href="@{/routines}" class="text-mutedForeground hover:text-primary"><i data-lucide="repeat" class="w-5 h-5"></i></a>
                 <form th:action="@{/logout}" method="post" class="inline">
                     <button type="submit" class="text-mutedForeground hover:text-primary"><i data-lucide="log-out" class="w-5 h-5"></i></button>
                 </form>

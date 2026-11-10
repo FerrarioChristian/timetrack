@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{fragments/layout :: layout('Routines - Timetrack', ~{::div})}">
+<body>
+<div class="max-w-6xl mx-auto space-y-8">
+
+    <!-- Top Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold tracking-tight">Routines</h1>
+            <p class="text-mutedForeground mt-1">Gestisci le tue attività e abitudini cicliche con stime del tempo e timer integrato.</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <button type="button" onclick="openCreateModal()" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-primary text-primaryForeground hover:bg-primary/90 h-10 px-4 py-2 gap-2">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                Nuova Routine
+            </button>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="flex border-b border-border">
+        <button id="tabBtnToday" onclick="switchTab('today')" class="px-4 py-2 text-sm font-medium border-b-2 border-primary text-foreground transition-colors">
+            Oggi & Sessioni
+        </button>
+        <button id="tabBtnAll" onclick="switchTab('all')" class="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-mutedForeground hover:text-foreground transition-colors">
+            Tutte le Routine (<span th:text="${stats.totalRoutines}">0</span>)
+        </button>
+        <button id="tabBtnStats" onclick="switchTab('stats')" class="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-mutedForeground hover:text-foreground transition-colors">
+            Statistiche & Analisi
+        </button>
+    </div>
+
+    <!-- TAB 1: OGGI & SESSIONI -->
+    <div id="tabToday" class="space-y-8">
+        
+        <!-- KPI Summary Cards -->
+        <div class="grid gap-4 grid-cols-2 md:grid-cols-4">
+            <div class="rounded-xl border border-border bg-card p-4">
+                <div class="flex items-center justify-between text-mutedForeground mb-1">
+                    <span class="text-xs uppercase tracking-wider font-medium">Da Fare Oggi</span>
+                    <i data-lucide="calendar-alert" class="w-4 h-4 text-amber-400"></i>
+                </div>
+                <div class="text-2xl font-bold" th:text="${stats.dueTodayCount}">0</div>
+                <p class="text-[0.7rem] text-mutedForeground mt-1" th:text="${stats.overdueCount > 0 ? stats.overdueCount + ' in ritardo' : 'Nessuna in ritardo'}">0 in ritardo</p>
+            </div>
+
+            <div class="rounded-xl border border-border bg-card p-4">
+                <div class="flex items-center justify-between text-mutedForeground mb-1">
+                    <span class="text-xs uppercase tracking-wider font-medium">Tempo Stimato</span>
+                    <i data-lucide="clock" class="w-4 h-4 text-emerald-400"></i>
+                </div>
+                <div class="text-2xl font-bold" th:text="${stats.totalEstimatedMinutesDueToday + ' min'}">0 min</div>
+                <p class="text-[0.7rem] text-mutedForeground mt-1">Per completare tutto oggi</p>
+            </div>
+
+            <div class="rounded-xl border border-border bg-card p-4">
+                <div class="flex items-center justify-between text-mutedForeground mb-1">
+                    <span class="text-xs uppercase tracking-wider font-medium">Completate Oggi</span>
+                    <i data-lucide="check-circle-2" class="w-4 h-4 text-blue-400"></i>
+                </div>
+                <div class="text-2xl font-bold" th:text="${stats.completedTodayCount}">0</div>
+                <p class="text-[0.7rem] text-mutedForeground mt-1" th:text="${stats.completedThisWeekCount + ' questa settimana'}">0 questa settimana</p>
+            </div>
+
+            <div class="rounded-xl border border-border bg-card p-4">
+                <div class="flex items-center justify-between text-mutedForeground mb-1">
+                    <span class="text-xs uppercase tracking-wider font-medium">Puntualità</span>
+                    <i data-lucide="shield-check" class="w-4 h-4 text-purple-400"></i>
+                </div>
+                <div class="text-2xl font-bold" th:text="${stats.onTimeRatePercent + '%'}">100%</div>
+                <p class="text-[0.7rem] text-mutedForeground mt-1">Tasso di completamento in tempo</p>
+            </div>
+        </div>
+
+        <!-- Filter Sessions -->
+        <div class="flex items-center gap-2 overflow-x-auto pb-2" th:if="${not #lists.isEmpty(existingGroups)}">
+            <span class="text-xs uppercase tracking-wider text-mutedForeground mr-2 font-medium">Sessione:</span>
+            <button type="button" onclick="filterSession('all')" class="session-filter-btn px-3 py-1 rounded-full text-xs font-semibold bg-accent text-accentForeground border border-border transition-colors" data-group="all">
+                Tutte
+            </button>
+            <button th:each="grp : ${existingGroups}" type="button" th:data-group="${grp}" onclick="filterSession(this.getAttribute('data-group'))" class="session-filter-btn px-3 py-1 rounded-full text-xs font-medium bg-card text-mutedForeground border border-border hover:text-foreground transition-colors" th:text="${grp}">
+                Sessione
+            </button>
+        </div>
+
+        <!-- Empty state when no due routines -->
+        <div th:if="${#lists.isEmpty(dueRoutines)}" class="flex flex-col items-center justify-center p-12 text-center rounded-xl border border-dashed border-border bg-card/40">
+            <div class="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center mb-4 text-emerald-400">
+                <i data-lucide="sparkles" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-semibold">Tutto in ordine!</h3>
+            <p class="text-sm text-mutedForeground mt-1 max-w-md">Non hai alcuna routine in scadenza per oggi. Controlla la scheda "Tutte le Routine" per visualizzare le prossime ricorrenze.</p>
+        </div>
+
+        <!-- Due Sessions Grouped -->
+        <div class="space-y-6" th:if="${not #lists.isEmpty(dueRoutines)}">
+            <div th:each="summary : ${summaries}" th:if="${summary.dueTasks > 0}" th:attr="data-session-container=${summary.sessionGroup}" class="session-block rounded-xl border border-border bg-card overflow-hidden">
+                
+                <!-- Session Header -->
+                <div class="px-6 py-4 border-b border-border bg-accent/30 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="layers" class="w-5 h-5 text-mutedForeground"></i>
+                        <h2 class="font-semibold text-lg" th:text="${summary.sessionGroup}">Sessione</h2>
+                    </div>
+                    <div class="flex items-center gap-3 text-xs">
+                        <span class="text-mutedForeground" th:text="${summary.dueTasks + ' da fare'}">0 da fare</span>
+                        <span class="inline-flex items-center gap-1 rounded-md bg-accent px-2 py-1 font-mono text-zinc-300">
+                            <i data-lucide="clock" class="w-3 h-3 text-mutedForeground"></i>
+                            <span th:text="${'~' + summary.totalEstimatedMinutesDue + ' min'}">~0 min</span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Session Tasks Checklist -->
+                <div class="divide-y divide-border">
+                    <div th:each="routine : ${summary.routines}" th:if="${routine.isDueOrOverdue()}" class="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-accent/20 transition-colors">
+                        
+                        <!-- Left: Checkbox + Title + Meta -->
+                        <div class="flex items-start gap-4">
+                            <!-- Quick Complete Button -->
+                            <form th:action="@{'/routines/' + ${routine.id} + '/complete'}" method="post" class="mt-0.5">
+                                <button type="submit" title="Segna come completato adesso" class="w-6 h-6 rounded-md border border-zinc-700 bg-background hover:bg-emerald-500/20 hover:border-emerald-500 flex items-center justify-center text-transparent hover:text-emerald-400 transition-all">
+                                    <i data-lucide="check" class="w-4 h-4"></i>
+                                </button>
+                            </form>
+
+                            <div>
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <h3 class="font-semibold text-base" th:text="${routine.name}">Nome Routine</h3>
+                                    
+                                    <!-- Status Badge -->
+                                    <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold"
+                                          th:classappend="${routine.statusBadgeClass}"
+                                          th:text="${routine.statusLabel}">
+                                        Stato
+                                    </span>
+                                </div>
+
+                                <p th:if="${routine.description != null and !routine.description.isEmpty()}" class="text-sm text-mutedForeground mt-0.5" th:text="${routine.description}">Descrizione</p>
+
+                                <div class="flex items-center gap-3 text-xs text-mutedForeground mt-2 flex-wrap">
+                                    <span class="flex items-center gap-1">
+                                        <i data-lucide="clock" class="w-3.5 h-3.5 text-zinc-400"></i>
+                                        <span th:text="${'~' + routine.estimatedMinutes + ' min'}">~5 min</span>
+                                    </span>
+                                    <span>•</span>
+                                    <span class="flex items-center gap-1">
+                                        <i data-lucide="repeat" class="w-3.5 h-3.5 text-zinc-400"></i>
+                                        <span th:text="${routine.recurrenceDescription}">Ogni 7 giorni</span>
+                                    </span>
+                                    <span th:if="${routine.activityName != null}">•</span>
+                                    <span th:if="${routine.activityName != null}" class="flex items-center gap-1 text-zinc-400">
+                                        <i data-lucide="link" class="w-3.5 h-3.5"></i>
+                                        <span th:text="${routine.activityName}">Attività collegata</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right: Actions -->
+                        <div class="flex items-center gap-2 self-end sm:self-center">
+                            <!-- Timer Button -->
+                            <button type="button"
+                                    th:data-id="${routine.id}"
+                                    th:data-name="${routine.name}"
+                                    th:data-session="${routine.sessionGroup}"
+                                    th:data-mins="${routine.estimatedMinutes}"
+                                    th:data-activity="${routine.activityName}"
+                                    onclick="openTimerModal(this.getAttribute('data-id'), this.getAttribute('data-name'), this.getAttribute('data-session'), this.getAttribute('data-mins'), this.getAttribute('data-activity'))"
+                                    class="inline-flex items-center justify-center rounded-md text-xs font-medium border border-border bg-accent/40 hover:bg-accent text-accentForeground h-9 px-3 gap-1.5 transition-colors">
+                                <i data-lucide="timer" class="w-4 h-4 text-emerald-400"></i>
+                                <span>Timer</span>
+                            </button>
+
+                            <!-- Edit Button -->
+                            <button type="button"
+                                    th:data-id="${routine.id}"
+                                    th:data-name="${routine.name}"
+                                    th:data-description="${routine.description}"
+                                    th:data-session="${routine.sessionGroup}"
+                                    th:data-mins="${routine.estimatedMinutes}"
+                                    th:data-type="${routine.recurrenceType}"
+                                    th:data-freq="${routine.frequencyDays}"
+                                    th:data-days="${routine.targetDaysOfWeek}"
+                                    th:data-activity-id="${routine.activityId}"
+                                    onclick="openEditRoutineModal(this)"
+                                    class="inline-flex items-center justify-center rounded-md text-xs font-medium border border-border hover:bg-accent hover:text-accentForeground h-9 w-9 text-mutedForeground transition-colors">
+                                <i data-lucide="pencil" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- TAB 2: TUTTE LE ROUTINE -->
+    <div id="tabAll" class="hidden space-y-6">
+        <div class="rounded-xl border border-border bg-card overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left">
+                    <thead class="text-xs text-mutedForeground bg-accent/40 border-b border-border uppercase">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 font-medium">Routine</th>
+                            <th scope="col" class="px-6 py-3 font-medium">Sessione</th>
+                            <th scope="col" class="px-6 py-3 font-medium">Ricorrenza</th>
+                            <th scope="col" class="px-6 py-3 font-medium">Stima</th>
+                            <th scope="col" class="px-6 py-3 font-medium">Ultimo Check</th>
+                            <th scope="col" class="px-6 py-3 font-medium">Prossima Data</th>
+                            <th scope="col" class="px-6 py-3 font-medium">Stato</th>
+                            <th scope="col" class="px-6 py-3 font-medium text-right">Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-border">
+                        <tr th:if="${#lists.isEmpty(allRoutines)}">
+                            <td colspan="8" class="px-6 py-8 text-center text-mutedForeground">Nessuna routine registrata. Creane una con il pulsante in alto!</td>
+                        </tr>
+                        <tr th:each="routine : ${allRoutines}" class="hover:bg-accent/20 transition-colors">
+                            <td class="px-6 py-4 font-semibold text-foreground">
+                                <div th:text="${routine.name}">Nome Routine</div>
+                                <div th:if="${routine.description != null}" class="text-xs text-mutedForeground font-normal" th:text="${routine.description}">Descrizione</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="inline-flex items-center rounded-full bg-accent px-2.5 py-0.5 text-xs font-medium text-accentForeground" th:text="${routine.sessionGroup}">Sessione</span>
+                            </td>
+                            <td class="px-6 py-4 text-mutedForeground text-xs" th:text="${routine.recurrenceDescription}">Ogni 7 giorni</td>
+                            <td class="px-6 py-4 font-mono text-xs" th:text="${routine.estimatedMinutes + ' min'}">5 min</td>
+                            <td class="px-6 py-4 text-mutedForeground text-xs" th:text="${routine.lastCompletedFormatted}">10/11/2026</td>
+                            <td class="px-6 py-4 text-xs font-medium" th:text="${routine.nextDueDateFormatted}">17/11/2026</td>
+                            <td class="px-6 py-4">
+                                <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold"
+                                      th:classappend="${routine.statusBadgeClass}"
+                                      th:text="${routine.statusLabel}">
+                                    Stato
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <div class="flex items-center justify-end gap-1">
+                                    <!-- Quick Complete -->
+                                    <form th:action="@{'/routines/' + ${routine.id} + '/complete'}" method="post">
+                                        <button type="submit" title="Completa" class="inline-flex items-center justify-center rounded-md h-8 w-8 hover:bg-emerald-500/10 text-mutedForeground hover:text-emerald-400 transition-colors">
+                                            <i data-lucide="check" class="w-4 h-4"></i>
+                                        </button>
+                                    </form>
+
+                                    <!-- Undo Last Check -->
+                                    <form th:if="${routine.completionsCount > 0}" th:action="@{'/routines/' + ${routine.id} + '/uncomplete'}" method="post" onsubmit="return confirm('Annullare l\'ultimo completamento registrato?');">
+                                        <button type="submit" title="Annulla ultimo completamento" class="inline-flex items-center justify-center rounded-md h-8 w-8 hover:bg-accent text-mutedForeground hover:text-foreground transition-colors">
+                                            <i data-lucide="undo-2" class="w-4 h-4"></i>
+                                        </button>
+                                    </form>
+
+                                    <!-- Edit -->
+                                    <button type="button"
+                                            th:data-id="${routine.id}"
+                                            th:data-name="${routine.name}"
+                                            th:data-description="${routine.description}"
+                                            th:data-session="${routine.sessionGroup}"
+                                            th:data-mins="${routine.estimatedMinutes}"
+                                            th:data-type="${routine.recurrenceType}"
+                                            th:data-freq="${routine.frequencyDays}"
+                                            th:data-days="${routine.targetDaysOfWeek}"
+                                            th:data-activity-id="${routine.activityId}"
+                                            onclick="openEditRoutineModal(this)"
+                                            class="inline-flex items-center justify-center rounded-md h-8 w-8 hover:bg-accent text-mutedForeground hover:text-foreground transition-colors">
+                                        <i data-lucide="pencil" class="w-4 h-4"></i>
+                                    </button>
+
+                                    <!-- Delete -->
+                                    <form th:action="@{'/routines/' + ${routine.id}}" th:method="delete" onsubmit="return confirm('Eliminare definitivamente questa routine e il suo storico?');">
+                                        <button type="submit" class="inline-flex items-center justify-center rounded-md h-8 w-8 hover:bg-destructive text-mutedForeground hover:text-destructiveForeground transition-colors">
+                                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 3: STATISTICHE & REPORT -->
+    <div id="tabStats" class="hidden space-y-8">
+        <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <div class="rounded-xl border border-border bg-card p-6">
+                <span class="text-xs uppercase tracking-wider text-mutedForeground font-medium">Puntualità Storica</span>
+                <div class="text-3xl font-bold mt-2" th:text="${stats.onTimeRatePercent + '%'}">95%</div>
+                <p class="text-xs text-mutedForeground mt-1">Eseguite entro la data di scadenza</p>
+            </div>
+
+            <div class="rounded-xl border border-border bg-card p-6">
+                <span class="text-xs uppercase tracking-wider text-mutedForeground font-medium">Questa Settimana</span>
+                <div class="text-3xl font-bold mt-2" th:text="${stats.completedThisWeekCount}">12</div>
+                <p class="text-xs text-mutedForeground mt-1">Routine portate a termine</p>
+            </div>
+
+            <div class="rounded-xl border border-border bg-card p-6">
+                <span class="text-xs uppercase tracking-wider text-mutedForeground font-medium">Tempo Reale Speso</span>
+                <div class="text-3xl font-bold mt-2" th:text="${stats.formattedTotalActualTimeThisWeek}">1h 25m</div>
+                <p class="text-xs text-mutedForeground mt-1">Registrato tramite timer questa settimana</p>
+            </div>
+
+            <div class="rounded-xl border border-border bg-card p-6">
+                <span class="text-xs uppercase tracking-wider text-mutedForeground font-medium">Durata Media Task</span>
+                <div class="text-3xl font-bold mt-2" th:text="${stats.formattedAverageDuration}">4m 30s</div>
+                <p class="text-xs text-mutedForeground mt-1">Tempo medio effettivo per routine</p>
+            </div>
+        </div>
+
+        <!-- Chart Row -->
+        <div class="rounded-xl border border-border bg-card p-6">
+            <h3 class="font-semibold text-lg mb-1">Completamenti per Sessione (Questa Settimana)</h3>
+            <p class="text-sm text-mutedForeground mb-6">Distribuzione del carico tra le varie macro-aree di attività.</p>
+            <div class="h-64 flex items-center justify-center">
+                <canvas id="routineChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 1: TIMER ROUTINE -->
+    <div id="timerModal" class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-card text-cardForeground border border-border shadow-2xl rounded-2xl max-w-md w-full p-6 text-center">
+            
+            <div class="flex items-center justify-between mb-4">
+                <span id="timerSessionBadge" class="text-xs uppercase tracking-wider text-mutedForeground font-medium bg-accent px-2.5 py-0.5 rounded-full">Sessione</span>
+                <button type="button" onclick="closeTimerModal()" class="text-mutedForeground hover:text-foreground">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <h2 id="timerRoutineName" class="text-2xl font-bold tracking-tight mb-1">Nome Routine</h2>
+            <p id="timerActivityInfo" class="text-xs text-mutedForeground mb-6">Stima stimata: ~5 min</p>
+
+            <!-- Mode Selector (Countdown vs Stopwatch) -->
+            <div class="inline-flex rounded-lg border border-border p-1 bg-accent/30 mb-6">
+                <button type="button" id="modeBtnCountdown" onclick="setTimerMode('countdown')" class="px-3 py-1 rounded-md text-xs font-semibold bg-primary text-primaryForeground transition-all">
+                    Countdown
+                </button>
+                <button type="button" id="modeBtnStopwatch" onclick="setTimerMode('stopwatch')" class="px-3 py-1 rounded-md text-xs font-medium text-mutedForeground hover:text-foreground transition-all">
+                    Cronometro
+                </button>
+            </div>
+
+            <!-- Big Circular Timer Display -->
+            <div class="relative w-56 h-56 mx-auto flex items-center justify-center mb-6">
+                <svg class="w-full h-full -rotate-90" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="44" stroke="currentColor" stroke-width="4.5" class="text-zinc-800" fill="transparent" />
+                    <circle id="timerProgressRing" cx="50" cy="50" r="44" stroke="currentColor" stroke-width="4.5" class="text-emerald-500 transition-all duration-300" stroke-linecap="round" fill="transparent" stroke-dasharray="276.46" stroke-dashoffset="0" />
+                </svg>
+                <div class="absolute flex flex-col items-center">
+                    <span id="timerDisplay" class="font-mono text-4xl font-bold tracking-tight text-foreground">05:00</span>
+                    <span id="timerStateLabel" class="text-[0.65rem] uppercase tracking-wider text-mutedForeground mt-1 font-semibold">Pronto</span>
+                </div>
+            </div>
+
+            <!-- Timer Action Buttons -->
+            <div class="flex justify-center gap-3 mb-6">
+                <button type="button" id="timerResetBtn" onclick="resetTimer()" class="inline-flex items-center justify-center rounded-md text-sm font-medium border border-border bg-card hover:bg-accent text-foreground h-10 w-10">
+                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                </button>
+                <button type="button" id="timerToggleBtn" onclick="toggleTimer()" class="inline-flex items-center justify-center rounded-md text-sm font-semibold bg-primary text-primaryForeground hover:bg-primary/90 h-10 px-6 gap-2">
+                    <i id="timerToggleIcon" data-lucide="play" class="w-4 h-4"></i>
+                    <span id="timerToggleText">Avvia</span>
+                </button>
+            </div>
+
+            <!-- Complete Form Form -->
+            <form id="completeTimerForm" method="post" class="space-y-3 pt-4 border-t border-border">
+                <input type="hidden" name="_csrf" th:value="${_csrf.token}" />
+                <input type="hidden" id="formActualSeconds" name="actualDurationSeconds" value="0" />
+                
+                <button type="submit" class="w-full inline-flex items-center justify-center rounded-md text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-500 h-10 px-4 gap-2 transition-colors">
+                    <i data-lucide="check-circle" class="w-4 h-4"></i>
+                    Completa Routine con questo tempo
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: CREA / MODIFICA ROUTINE -->
+    <div id="routineModal" class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-card text-cardForeground border border-border shadow-2xl rounded-2xl max-w-lg w-full p-6 text-left">
+            <h2 id="routineModalTitle" class="text-xl font-bold tracking-tight mb-4">Nuova Routine</h2>
+
+            <form id="routineForm" method="post" th:action="@{/routines}" class="space-y-4">
+                <input type="hidden" name="_csrf" th:value="${_csrf.token}" />
+                <input type="hidden" name="_method" id="routineFormMethod" value="post" />
+
+                <!-- Name -->
+                <div class="space-y-1.5">
+                    <label for="routineNameInput" class="text-xs font-semibold uppercase tracking-wider text-mutedForeground">Nome Routine *</label>
+                    <input type="text" id="routineNameInput" name="name" required placeholder="es. Lavandino bagno, Barba, Microonde..." class="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                </div>
+
+                <!-- Description -->
+                <div class="space-y-1.5">
+                    <label for="routineDescInput" class="text-xs font-semibold uppercase tracking-wider text-mutedForeground">Descrizione / Note (opzionale)</label>
+                    <input type="text" id="routineDescInput" name="description" placeholder="Dettagli specifici o istruzioni..." class="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                </div>
+
+                <!-- Session Group & Estimated Minutes -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="space-y-1.5">
+                        <label for="routineGroupInput" class="text-xs font-semibold uppercase tracking-wider text-mutedForeground">Sessione / Gruppo *</label>
+                        <input type="text" id="routineGroupInput" name="sessionGroup" list="sessionGroupList" required placeholder="es. Pulizia Bagno, Cura Personale..." class="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                        <datalist id="sessionGroupList">
+                            <option th:each="grp : ${existingGroups}" th:value="${grp}"></option>
+                            <option value="Pulizia Bagno"></option>
+                            <option value="Cucina & Casa"></option>
+                            <option value="Cura Personale"></option>
+                            <option value="Dispositivi & Salute"></option>
+                        </datalist>
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <label for="routineMinsInput" class="text-xs font-semibold uppercase tracking-wider text-mutedForeground">Tempo Stimato (minuti) *</label>
+                        <input type="number" id="routineMinsInput" name="estimatedMinutes" min="1" max="300" value="5" required class="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                    </div>
+                </div>
+
+                <!-- Recurrence Strategy -->
+                <div class="space-y-2 pt-2 border-t border-border">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-mutedForeground">Impostazioni di Ricorrenza</span>
+                    
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="flex items-center gap-2 p-3 rounded-lg border border-border cursor-pointer hover:bg-accent/30 transition-colors">
+                            <input type="radio" name="recurrenceType" value="DAYS_INTERVAL" id="radioDaysInterval" checked onchange="toggleRecurrenceUI()" class="text-primary">
+                            <span class="text-xs font-medium">Intervallo di Giorni</span>
+                        </label>
+                        <label class="flex items-center gap-2 p-3 rounded-lg border border-border cursor-pointer hover:bg-accent/30 transition-colors">
+                            <input type="radio" name="recurrenceType" value="WEEKLY_DAYS" id="radioWeeklyDays" onchange="toggleRecurrenceUI()" class="text-primary">
+                            <span class="text-xs font-medium">Giorni della Settimana</span>
+                        </label>
+                    </div>
+
+                    <!-- Days Interval Input -->
+                    <div id="daysIntervalSection" class="pt-2">
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs text-mutedForeground">Ripeti ogni</span>
+                            <input type="number" id="frequencyDaysInput" name="frequencyDays" min="1" max="365" value="7" class="w-20 flex h-10 rounded-md border border-border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                            <span class="text-xs text-mutedForeground">giorni</span>
+                        </div>
+                    </div>
+
+                    <!-- Weekly Days Selector -->
+                    <div id="weeklyDaysSection" class="pt-2 hidden space-y-2">
+                        <span class="text-xs text-mutedForeground">Seleziona i giorni preferiti:</span>
+                        <div class="flex flex-wrap gap-1.5" id="daysOfWeekCheckboxes">
+                            <label class="cursor-pointer">
+                                <input type="checkbox" value="MONDAY" class="peer sr-only day-checkbox">
+                                <span class="px-2.5 py-1 rounded-md text-xs font-medium border border-border bg-background peer-checked:bg-primary peer-checked:text-primaryForeground transition-all">Lun</span>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="checkbox" value="TUESDAY" class="peer sr-only day-checkbox">
+                                <span class="px-2.5 py-1 rounded-md text-xs font-medium border border-border bg-background peer-checked:bg-primary peer-checked:text-primaryForeground transition-all">Mar</span>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="checkbox" value="WEDNESDAY" class="peer sr-only day-checkbox">
+                                <span class="px-2.5 py-1 rounded-md text-xs font-medium border border-border bg-background peer-checked:bg-primary peer-checked:text-primaryForeground transition-all">Mer</span>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="checkbox" value="THURSDAY" class="peer sr-only day-checkbox">
+                                <span class="px-2.5 py-1 rounded-md text-xs font-medium border border-border bg-background peer-checked:bg-primary peer-checked:text-primaryForeground transition-all">Gio</span>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="checkbox" value="FRIDAY" class="peer sr-only day-checkbox">
+                                <span class="px-2.5 py-1 rounded-md text-xs font-medium border border-border bg-background peer-checked:bg-primary peer-checked:text-primaryForeground transition-all">Ven</span>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="checkbox" value="SATURDAY" class="peer sr-only day-checkbox">
+                                <span class="px-2.5 py-1 rounded-md text-xs font-medium border border-border bg-background peer-checked:bg-primary peer-checked:text-primaryForeground transition-all">Sab</span>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="checkbox" value="SUNDAY" class="peer sr-only day-checkbox">
+                                <span class="px-2.5 py-1 rounded-md text-xs font-medium border border-border bg-background peer-checked:bg-primary peer-checked:text-primaryForeground transition-all">Dom</span>
+                            </label>
+                        </div>
+                        <input type="hidden" id="targetDaysOfWeekInput" name="targetDaysOfWeek" value="">
+                    </div>
+                </div>
+
+                <!-- Link to Activity (Optional) -->
+                <div class="space-y-1.5 pt-2 border-t border-border">
+                    <label for="routineActivitySelect" class="text-xs font-semibold uppercase tracking-wider text-mutedForeground">Collega ad Attività TimeTrack (opzionale)</label>
+                    <select id="routineActivitySelect" name="activityId" class="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                        <option value="">Nessun collegamento</option>
+                        <option th:each="act : ${activities}" th:value="${act.id}" th:text="${act.name}">Attività</option>
+                    </select>
+                    <p class="text-[0.7rem] text-mutedForeground">Completare la routine con il timer registrerà una sessione su questa attività.</p>
+                </div>
+
+                <div class="flex gap-3 pt-4 border-t border-border">
+                    <button type="button" onclick="closeRoutineModal()" class="flex-1 inline-flex items-center justify-center rounded-md text-sm font-medium border border-border bg-transparent hover:bg-accent hover:text-accentForeground h-10 px-4">
+                        Annulla
+                    </button>
+                    <button type="submit" class="flex-1 inline-flex items-center justify-center rounded-md text-sm font-semibold bg-primary text-primaryForeground hover:bg-primary/90 h-10 px-4">
+                        Salva Routine
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+
+<!-- Scripts -->
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    // Tabs Switcher
+    function switchTab(tabId) {
+        document.getElementById('tabToday').classList.add('hidden');
+        document.getElementById('tabAll').classList.add('hidden');
+        document.getElementById('tabStats').classList.add('hidden');
+
+        document.getElementById('tabBtnToday').classList.replace('border-primary', 'border-transparent');
+        document.getElementById('tabBtnToday').classList.replace('text-foreground', 'text-mutedForeground');
+        document.getElementById('tabBtnAll').classList.replace('border-primary', 'border-transparent');
+        document.getElementById('tabBtnAll').classList.replace('text-foreground', 'text-mutedForeground');
+        document.getElementById('tabBtnStats').classList.replace('border-primary', 'border-transparent');
+        document.getElementById('tabBtnStats').classList.replace('text-foreground', 'text-mutedForeground');
+
+        if (tabId === 'today') {
+            document.getElementById('tabToday').classList.remove('hidden');
+            document.getElementById('tabBtnToday').classList.replace('border-transparent', 'border-primary');
+            document.getElementById('tabBtnToday').classList.replace('text-mutedForeground', 'text-foreground');
+        } else if (tabId === 'all') {
+            document.getElementById('tabAll').classList.remove('hidden');
+            document.getElementById('tabBtnAll').classList.replace('border-transparent', 'border-primary');
+            document.getElementById('tabBtnAll').classList.replace('text-mutedForeground', 'text-foreground');
+        } else if (tabId === 'stats') {
+            document.getElementById('tabStats').classList.remove('hidden');
+            document.getElementById('tabBtnStats').classList.replace('border-transparent', 'border-primary');
+            document.getElementById('tabBtnStats').classList.replace('text-mutedForeground', 'text-foreground');
+            initStatsChart();
+        }
+        lucide.createIcons();
+    }
+
+    // Session Filter Buttons
+    function filterSession(group) {
+        const buttons = document.querySelectorAll('.session-filter-btn');
+        buttons.forEach(btn => {
+            if (btn.getAttribute('data-group') === group) {
+                btn.classList.add('bg-accent', 'text-accentForeground');
+                btn.classList.remove('bg-card', 'text-mutedForeground');
+            } else {
+                btn.classList.remove('bg-accent', 'text-accentForeground');
+                btn.classList.add('bg-card', 'text-mutedForeground');
+            }
+        });
+
+        const blocks = document.querySelectorAll('.session-block');
+        blocks.forEach(block => {
+            if (group === 'all' || block.getAttribute('data-session-container') === group) {
+                block.classList.remove('hidden');
+            } else {
+                block.classList.add('hidden');
+            }
+        });
+    }
+
+    // Modal Create / Edit
+    function openCreateModal() {
+        document.getElementById('routineModalTitle').textContent = 'Nuova Routine';
+        document.getElementById('routineFormMethod').value = 'post';
+        document.getElementById('routineForm').action = '/routines';
+        document.getElementById('routineNameInput').value = '';
+        document.getElementById('routineDescInput').value = '';
+        document.getElementById('routineGroupInput').value = '';
+        document.getElementById('routineMinsInput').value = '5';
+        document.getElementById('radioDaysInterval').checked = true;
+        document.getElementById('frequencyDaysInput').value = '7';
+        document.getElementById('routineActivitySelect').value = '';
+
+        document.querySelectorAll('.day-checkbox').forEach(cb => cb.checked = false);
+        document.getElementById('targetDaysOfWeekInput').value = '';
+
+        toggleRecurrenceUI();
+        document.getElementById('routineModal').classList.remove('hidden');
+    }
+
+    function openEditRoutineModal(btn) {
+        document.getElementById('routineModalTitle').textContent = 'Modifica Routine';
+        document.getElementById('routineFormMethod').value = 'put';
+        const id = btn.getAttribute('data-id');
+        document.getElementById('routineForm').action = '/routines/' + id;
+
+        document.getElementById('routineNameInput').value = btn.getAttribute('data-name') || '';
+        document.getElementById('routineDescInput').value = btn.getAttribute('data-description') || '';
+        document.getElementById('routineGroupInput').value = btn.getAttribute('data-session') || '';
+        document.getElementById('routineMinsInput').value = btn.getAttribute('data-mins') || '5';
+        
+        const type = btn.getAttribute('data-type');
+        if (type === 'WEEKLY_DAYS') {
+            document.getElementById('radioWeeklyDays').checked = true;
+        } else {
+            document.getElementById('radioDaysInterval').checked = true;
+        }
+
+        document.getElementById('frequencyDaysInput').value = btn.getAttribute('data-freq') || '7';
+        
+        const days = btn.getAttribute('data-days') || '';
+        document.getElementById('targetDaysOfWeekInput').value = days;
+        const daysArr = days.split(',').map(s => s.trim().toUpperCase());
+        document.querySelectorAll('.day-checkbox').forEach(cb => {
+            cb.checked = daysArr.includes(cb.value);
+        });
+
+        document.getElementById('routineActivitySelect').value = btn.getAttribute('data-activity-id') || '';
+
+        toggleRecurrenceUI();
+        document.getElementById('routineModal').classList.remove('hidden');
+    }
+
+    function closeRoutineModal() {
+        document.getElementById('routineModal').classList.add('hidden');
+    }
+
+    function toggleRecurrenceUI() {
+        const isWeekly = document.getElementById('radioWeeklyDays').checked;
+        if (isWeekly) {
+            document.getElementById('daysIntervalSection').classList.add('hidden');
+            document.getElementById('weeklyDaysSection').classList.remove('hidden');
+        } else {
+            document.getElementById('daysIntervalSection').classList.remove('hidden');
+            document.getElementById('weeklyDaysSection').classList.add('hidden');
+        }
+    }
+
+    // Sync weekday checkboxes to hidden input
+    document.addEventListener('change', function(e) {
+        if (e.target && e.target.classList.contains('day-checkbox')) {
+            const checked = Array.from(document.querySelectorAll('.day-checkbox:checked')).map(cb => cb.value);
+            document.getElementById('targetDaysOfWeekInput').value = checked.join(',');
+        }
+    });
+
+    // TIMER STATE & LOGIC
+    let timerRoutineId = null;
+    let timerMode = 'countdown'; // 'countdown' or 'stopwatch'
+    let timerTargetSeconds = 300;
+    let timerCurrentSeconds = 300;
+    let timerInterval = null;
+    let timerIsRunning = false;
+    let timerElapsedSeconds = 0;
+
+    const CIRCUMFERENCE = 2 * Math.PI * 44; // ~276.46
+
+    function openTimerModal(id, name, session, mins, activity) {
+        timerRoutineId = id;
+        document.getElementById('completeTimerForm').action = '/routines/' + id + '/complete';
+        document.getElementById('timerRoutineName').textContent = name;
+        document.getElementById('timerSessionBadge').textContent = session;
+
+        const m = parseInt(mins) || 5;
+        timerTargetSeconds = m * 60;
+        timerCurrentSeconds = timerTargetSeconds;
+        timerElapsedSeconds = 0;
+
+        document.getElementById('timerActivityInfo').textContent = activity 
+            ? 'Stima: ~' + m + ' min • Collegato a: ' + activity 
+            : 'Stima: ~' + m + ' min';
+
+        setTimerMode('countdown');
+        resetTimerState();
+
+        document.getElementById('timerModal').classList.remove('hidden');
+        lucide.createIcons();
+    }
+
+    function closeTimerModal() {
+        pauseTimer();
+        document.getElementById('timerModal').classList.add('hidden');
+    }
+
+    function setTimerMode(mode) {
+        timerMode = mode;
+        pauseTimer();
+
+        if (mode === 'countdown') {
+            document.getElementById('modeBtnCountdown').classList.replace('text-mutedForeground', 'text-primaryForeground');
+            document.getElementById('modeBtnCountdown').classList.replace('font-medium', 'font-semibold');
+            document.getElementById('modeBtnCountdown').classList.add('bg-primary');
+
+            document.getElementById('modeBtnStopwatch').classList.replace('text-primaryForeground', 'text-mutedForeground');
+            document.getElementById('modeBtnStopwatch').classList.replace('font-semibold', 'font-medium');
+            document.getElementById('modeBtnStopwatch').classList.remove('bg-primary');
+
+            timerCurrentSeconds = timerTargetSeconds;
+        } else {
+            document.getElementById('modeBtnStopwatch').classList.replace('text-mutedForeground', 'text-primaryForeground');
+            document.getElementById('modeBtnStopwatch').classList.replace('font-medium', 'font-semibold');
+            document.getElementById('modeBtnStopwatch').classList.add('bg-primary');
+
+            document.getElementById('modeBtnCountdown').classList.replace('text-primaryForeground', 'text-mutedForeground');
+            document.getElementById('modeBtnCountdown').classList.replace('font-semibold', 'font-medium');
+            document.getElementById('modeBtnCountdown').classList.remove('bg-primary');
+
+            timerCurrentSeconds = 0;
+        }
+        updateTimerDisplay();
+    }
+
+    function toggleTimer() {
+        if (timerIsRunning) {
+            pauseTimer();
+        } else {
+            startTimer();
+        }
+    }
+
+    function startTimer() {
+        timerIsRunning = true;
+        document.getElementById('timerStateLabel').textContent = 'In esecuzione';
+        document.getElementById('timerToggleText').textContent = 'Pausa';
+        document.getElementById('timerToggleIcon').setAttribute('data-lucide', 'pause');
+        lucide.createIcons();
+
+        timerInterval = setInterval(function() {
+            if (timerMode === 'countdown') {
+                if (timerCurrentSeconds > 0) {
+                    timerCurrentSeconds--;
+                    timerElapsedSeconds++;
+                } else {
+                    pauseTimer();
+                    document.getElementById('timerStateLabel').textContent = 'Tempo Scaduto!';
+                }
+            } else {
+                timerCurrentSeconds++;
+                timerElapsedSeconds = timerCurrentSeconds;
+            }
+            updateTimerDisplay();
+        }, 1000);
+    }
+
+    function pauseTimer() {
+        timerIsRunning = false;
+        clearInterval(timerInterval);
+        document.getElementById('timerStateLabel').textContent = 'In pausa';
+        document.getElementById('timerToggleText').textContent = 'Riprendi';
+        document.getElementById('timerToggleIcon').setAttribute('data-lucide', 'play');
+        lucide.createIcons();
+    }
+
+    function resetTimer() {
+        pauseTimer();
+        resetTimerState();
+    }
+
+    function resetTimerState() {
+        if (timerMode === 'countdown') {
+            timerCurrentSeconds = timerTargetSeconds;
+        } else {
+            timerCurrentSeconds = 0;
+        }
+        timerElapsedSeconds = 0;
+        document.getElementById('timerStateLabel').textContent = 'Pronto';
+        document.getElementById('timerToggleText').textContent = 'Avvia';
+        document.getElementById('timerToggleIcon').setAttribute('data-lucide', 'play');
+        updateTimerDisplay();
+        lucide.createIcons();
+    }
+
+    function updateTimerDisplay() {
+        const display = document.getElementById('timerDisplay');
+        const ring = document.getElementById('timerProgressRing');
+        const formActual = document.getElementById('formActualSeconds');
+
+        const mins = Math.floor(timerCurrentSeconds / 60);
+        const secs = timerCurrentSeconds % 60;
+        display.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+        // Update progress ring
+        if (timerMode === 'countdown') {
+            const fraction = timerTargetSeconds > 0 ? timerCurrentSeconds / timerTargetSeconds : 0;
+            const offset = CIRCUMFERENCE - (fraction * CIRCUMFERENCE);
+            ring.style.strokeDashoffset = offset;
+        } else {
+            // In stopwatch mode, ring loops every 60s
+            const fraction = (timerCurrentSeconds % 60) / 60;
+            const offset = CIRCUMFERENCE - (fraction * CIRCUMFERENCE);
+            ring.style.strokeDashoffset = offset;
+        }
+
+        formActual.value = timerElapsedSeconds;
+    }
+
+    // Chart.js initialization
+    let routineChartInstance = null;
+    function initStatsChart() {
+        if (routineChartInstance) return;
+        const ctx = document.getElementById('routineChart');
+        if (!ctx) return;
+
+        const labels = /*[[${chartLabels}]]*/ [];
+        const dataValues = /*[[${chartData}]]*/ [];
+
+        if (!labels || labels.length === 0) {
+            ctx.parentElement.innerHTML = '<div class="text-sm text-mutedForeground text-center py-12">Nessun dato di completamento registrato questa settimana. Completa qualche routine per visualizzare il grafico!</div>';
+            return;
+        }
+
+        Chart.defaults.color = '#a1a1aa';
+        Chart.defaults.font.family = 'Inter';
+
+        routineChartInstance = new Chart(ctx.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Completamenti',
+                    data: dataValues,
+                    backgroundColor: '#10b981',
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1 },
+                        grid: { color: '#27272a' }
+                    }
+                }
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        lucide.createIcons();
+    });
+    /*]]>*/
+</script>
+</body>
+</html>
