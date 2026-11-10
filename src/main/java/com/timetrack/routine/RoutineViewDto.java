@@ -28,6 +28,8 @@ public class RoutineViewDto {
     private final String activityName;
     private final int completionsCount;
     private final String lastDurationFormatted;
+    private final java.util.List<String> checklistItems;
+    private final String checklistItemsRaw;
 
     public RoutineViewDto(Routine routine) {
         this.id = routine.getId();
@@ -66,6 +68,9 @@ public class RoutineViewDto {
         } else {
             this.lastDurationFormatted = "-";
         }
+
+        this.checklistItems = routine.getChecklistItems() != null ? new java.util.ArrayList<>(routine.getChecklistItems()) : java.util.Collections.emptyList();
+        this.checklistItemsRaw = String.join("\n", this.checklistItems);
     }
 
     public Long getId() {
@@ -138,6 +143,18 @@ public class RoutineViewDto {
 
     public String getLastDurationFormatted() {
         return lastDurationFormatted;
+    }
+
+    public java.util.List<String> getChecklistItems() {
+        return checklistItems;
+    }
+
+    public String getChecklistItemsRaw() {
+        return checklistItemsRaw;
+    }
+
+    public boolean hasChecklist() {
+        return checklistItems != null && !checklistItems.isEmpty();
     }
 
     public boolean isDueOrOverdue() {

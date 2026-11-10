@@ -232,73 +232,108 @@ public class DemoDataSeeder implements CommandLineRunner {
 
         // 1. Pulizia Bagno
         Routine lavandinoBagno = createRoutine(demoUser, "Lavandino Bagno", "Pulizia e sanificazione lavandino e specchio",
-                "Pulizia Bagno", 3, RecurrenceType.DAYS_INTERVAL, 3, null, now.minusDays(3));
+                "Pulizia Bagno", 3, RecurrenceType.DAYS_INTERVAL, 3, null, now.minusDays(3),
+                List.of("Vasca e miscelatore", "Specchio", "Piano d'appoggio"));
 
         Routine wc = createRoutine(demoUser, "WC", "Igienizzazione completa water",
-                "Pulizia Bagno", 3, RecurrenceType.DAYS_INTERVAL, 4, null, now.minusDays(5)); // overdue by 1 day!
+                "Pulizia Bagno", 3, RecurrenceType.DAYS_INTERVAL, 4, null, now.minusDays(5),
+                List.of("Disinfezione interna con candeggina", "Pulizia tavoletta e copriwater", "Spazzolino e bordo")); // overdue by 1 day!
 
         Routine bidet = createRoutine(demoUser, "Bidet", "Pulizia e disinfezione bidet",
-                "Pulizia Bagno", 2, RecurrenceType.DAYS_INTERVAL, 4, null, now.minusDays(4)); // due today
+                "Pulizia Bagno", 2, RecurrenceType.DAYS_INTERVAL, 4, null, now.minusDays(4),
+                List.of("Miscelatore", "Ceramica interna", "Asciugatura bordo")); // due today
 
         createRoutine(demoUser, "Doccia", "Lavaggio fondo e box doccia",
-                "Pulizia Bagno", 8, RecurrenceType.DAYS_INTERVAL, 10, null, now.minusDays(6));
+                "Pulizia Bagno", 8, RecurrenceType.DAYS_INTERVAL, 10, null, now.minusDays(6),
+                List.of("Piatto doccia", "Trattamento anticalcare", "Sgocciolatore"));
 
         createRoutine(demoUser, "Doccino", "Decalcificazione e pulizia doccino",
-                "Pulizia Bagno", 3, RecurrenceType.DAYS_INTERVAL, 14, null, now.minusDays(10));
+                "Pulizia Bagno", 3, RecurrenceType.DAYS_INTERVAL, 14, null, now.minusDays(10),
+                List.of("Immersione anticalcare", "Sciacquo getti"));
 
         createRoutine(demoUser, "Portasapone Doccia", "Lavaggio e rimozione residui sapone",
-                "Pulizia Bagno", 2, RecurrenceType.DAYS_INTERVAL, 14, null, now.minusDays(12));
+                "Pulizia Bagno", 2, RecurrenceType.DAYS_INTERVAL, 14, null, now.minusDays(12),
+                List.of("Lavaggio spugna e piattello"));
 
         createRoutine(demoUser, "Pareti Doccia", "Trattamento anticalcare vetri e piastrelle",
-                "Pulizia Bagno", 8, RecurrenceType.DAYS_INTERVAL, 21, null, now.minusDays(15));
+                "Pulizia Bagno", 8, RecurrenceType.DAYS_INTERVAL, 21, null, now.minusDays(15),
+                List.of("Vetro frontale", "Vetro laterale", "Fughe piastrelle"));
 
         createRoutine(demoUser, "Tappeto Bagno", "Lavaggio in lavatrice tappeto",
-                "Pulizia Bagno", 5, RecurrenceType.DAYS_INTERVAL, 28, null, now.minusDays(20));
+                "Pulizia Bagno", 5, RecurrenceType.DAYS_INTERVAL, 28, null, now.minusDays(20),
+                List.of("Scuotere e lavare a 40°", "Stendere"));
 
         // 2. Cucina & Casa
         Routine lavandinoCucina = createRoutine(demoUser, "Lavandino Cucina", "Sgrassatura vasca e sgombero piano",
-                "Cucina & Casa", 4, RecurrenceType.DAYS_INTERVAL, 3, null, now.minusDays(3)); // due today
+                "Cucina & Casa", 4, RecurrenceType.DAYS_INTERVAL, 3, null, now.minusDays(3),
+                List.of("Svuotare e pulire filtro", "Sgrassare vasca e sgocciolatoio", "Asciugare miscelatore")); // due today
 
-        createRoutine(demoUser, "Microonde", "Pulizia interna e piatto girevole",
-                "Cucina & Casa", 8, RecurrenceType.DAYS_INTERVAL, 14, null, now.minusDays(14)); // due today
+        Routine microonde = createRoutine(demoUser, "Microonde", "Pulizia interna e piatto girevole",
+                "Cucina & Casa", 8, RecurrenceType.DAYS_INTERVAL, 14, null, now.minusDays(14),
+                List.of("Lavaggio piatto girevole", "Pulizia pareti interne e resistenza", "Vetro sportello")); // due today
 
         createRoutine(demoUser, "Frigorifero", "Controllo scadenze e pulizia ripiani",
-                "Cucina & Casa", 15, RecurrenceType.DAYS_INTERVAL, 30, null, now.minusDays(22));
+                "Cucina & Casa", 15, RecurrenceType.DAYS_INTERVAL, 30, null, now.minusDays(22),
+                List.of("Controllo scadenze e scarti", "Pulizia ripiani in vetro", "Cassetto verdura e guarnizioni"));
 
         // 3. Cura Personale
         Routine barba = createRoutine(demoUser, "Regolazione Barba", "Rifinitura contorni e regolazione lunghezza",
-                "Cura Personale", 12, RecurrenceType.DAYS_INTERVAL, 3, null, now.minusDays(3)); // due today
+                "Cura Personale", 12, RecurrenceType.DAYS_INTERVAL, 3, null, now.minusDays(3),
+                List.of("Pettinatura", "Regolazione con rasoio", "Rifinitura collo e guance", "Olio o dopobarba")); // due today
 
         createRoutine(demoUser, "Taglio Unghie", "Manicure e limatura",
-                "Cura Personale", 8, RecurrenceType.DAYS_INTERVAL, 7, null, now.minusDays(2));
+                "Cura Personale", 8, RecurrenceType.DAYS_INTERVAL, 7, null, now.minusDays(2),
+                List.of("Taglio mani", "Taglio piedi", "Limatura"));
 
         // 4. Dispositivi & Salute
         Routine dispositivi = createRoutine(demoUser, "Disinfettare Dispositivi", "Disinfezione alcolica smartphone, auricolari e tastiera",
-                "Dispositivi & Salute", 8, RecurrenceType.DAYS_INTERVAL, 7, null, now.minusDays(7)); // due today
+                "Dispositivi & Salute", 8, RecurrenceType.DAYS_INTERVAL, 7, null, now.minusDays(7),
+                List.of("Smartphone e cover", "Custodia e auricolari", "Tastiera meccanica", "Mouse e scrivania")); // due today
 
-        createRoutine(demoUser, "Riempire Omega3 & Integratori", "Preparazione dosatore settimanale",
-                "Dispositivi & Salute", 2, RecurrenceType.WEEKLY_DAYS, null, "SUNDAY", now.minusDays(7));
+        Routine omega3 = createRoutine(demoUser, "Riempire Omega3 & Integratori", "Preparazione dosatore settimanale",
+                "Dispositivi & Salute", 2, RecurrenceType.WEEKLY_DAYS, null, "SUNDAY", now.minusDays(7),
+                List.of("Dosatore Lun-Dom", "Omega3", "Multivitaminico"));
 
-        // Seed some historical completions for analytics
+        // Seed rich historical completions for heatmap and streaks across the last 4 weeks
         seedHistoricalCompletion(lavandinoBagno, now.minusDays(3), 190, true);
         seedHistoricalCompletion(lavandinoBagno, now.minusDays(6), 175, true);
         seedHistoricalCompletion(lavandinoBagno, now.minusDays(9), 210, true);
+        seedHistoricalCompletion(lavandinoBagno, now.minusDays(12), 180, true);
+        seedHistoricalCompletion(lavandinoBagno, now.minusDays(15), 185, true);
+        seedHistoricalCompletion(lavandinoBagno, now.minusDays(18), 200, true);
+        seedHistoricalCompletion(lavandinoBagno, now.minusDays(21), 195, true);
+
+        seedHistoricalCompletion(wc, now.minusDays(5), 210, true);
+        seedHistoricalCompletion(wc, now.minusDays(9), 190, true);
+        seedHistoricalCompletion(wc, now.minusDays(13), 180, true);
 
         seedHistoricalCompletion(bidet, now.minusDays(4), 110, true);
         seedHistoricalCompletion(bidet, now.minusDays(8), 125, true);
+        seedHistoricalCompletion(bidet, now.minusDays(12), 115, true);
 
         seedHistoricalCompletion(lavandinoCucina, now.minusDays(3), 230, true);
         seedHistoricalCompletion(lavandinoCucina, now.minusDays(6), 245, true);
+        seedHistoricalCompletion(lavandinoCucina, now.minusDays(9), 220, true);
+        seedHistoricalCompletion(lavandinoCucina, now.minusDays(12), 240, true);
+        seedHistoricalCompletion(lavandinoCucina, now.minusDays(15), 235, true);
 
         seedHistoricalCompletion(barba, now.minusDays(3), 710, true);
         seedHistoricalCompletion(barba, now.minusDays(6), 690, true);
+        seedHistoricalCompletion(barba, now.minusDays(9), 720, true);
+        seedHistoricalCompletion(barba, now.minusDays(12), 680, true);
 
         seedHistoricalCompletion(dispositivi, now.minusDays(7), 460, true);
+        seedHistoricalCompletion(dispositivi, now.minusDays(14), 480, true);
+        seedHistoricalCompletion(dispositivi, now.minusDays(21), 470, true);
+
+        seedHistoricalCompletion(omega3, now.minusDays(7), 115, true);
+        seedHistoricalCompletion(omega3, now.minusDays(14), 120, true);
+        seedHistoricalCompletion(omega3, now.minusDays(21), 110, true);
     }
 
     private Routine createRoutine(User user, String name, String description, String sessionGroup,
                                   int estimatedMinutes, RecurrenceType recurrenceType, Integer frequencyDays,
-                                  String targetDaysOfWeek, LocalDateTime lastCompletedAt) {
+                                  String targetDaysOfWeek, LocalDateTime lastCompletedAt, List<String> checklistItems) {
         Routine routine = new Routine();
         routine.setUser(user);
         routine.setName(name);
@@ -309,7 +344,8 @@ public class DemoDataSeeder implements CommandLineRunner {
         routine.setFrequencyDays(frequencyDays);
         routine.setTargetDaysOfWeek(targetDaysOfWeek);
         routine.setLastCompletedAt(lastCompletedAt);
-        routine.setCreatedAt(lastCompletedAt != null ? lastCompletedAt.minusDays(30) : LocalDateTime.now().minusDays(30));
+        routine.setChecklistItems(checklistItems != null ? checklistItems : List.of());
+        routine.setCreatedAt(lastCompletedAt != null ? lastCompletedAt.minusDays(45) : LocalDateTime.now().minusDays(45));
         return routineRepository.save(routine);
     }
 

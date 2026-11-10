@@ -29,5 +29,9 @@ public interface RoutineService {
 
     void undoLastCompletion(Long id, User user);
 
+    List<RoutineCompletion> completeBatchSession(List<RoutineSessionCompletionItemDto> items, User user);
+
+    RoutineHeatmapDto getHeatmapData(User user, int weeks);
+
     List<String> getExistingSessionGroups(User user);
 }

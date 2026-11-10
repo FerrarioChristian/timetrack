@@ -57,6 +57,7 @@ class RoutineServiceTest {
         dto.setEstimatedMinutes(4);
         dto.setRecurrenceType(RecurrenceType.DAYS_INTERVAL);
         dto.setFrequencyDays(3);
+        dto.setChecklistItemsRaw("Vasca e miscelatore\nSpecchio\nPiano");
 
         Routine created = routineService.createRoutine(dto, testUser);
 
@@ -65,6 +66,8 @@ class RoutineServiceTest {
         assertEquals("Pulizia Bagno", created.getSessionGroup());
         assertEquals(4, created.getEstimatedMinutes());
         assertEquals(3, created.getFrequencyDays());
+        assertEquals(3, created.getChecklistItems().size());
+        assertEquals("Vasca e miscelatore", created.getChecklistItems().get(0));
         // Since never completed, it is due today
         assertTrue(created.isDueOrOverdue());
         assertEquals(RoutineStatus.DUE_TODAY, created.getStatus());
@@ -165,5 +168,59 @@ class RoutineServiceTest {
         RoutineStatsDto stats = routineService.getStats(testUser);
         assertNotNull(stats);
         assertNotNull(stats.completionsPerSessionGroup());
+    }
+
+    @Test
+    @DisplayName("Should batch complete routines through session runner")
+    void testCompleteBatchSession() {
+        Routine r1 = new Routine();
+        r1.setUser(testUser);
+        r1.setName("Task A");
+        r1.setSessionGroup("Test Session");
+        r1.setEstimatedMinutes(5);
+        r1 = routineRepository.save(r1);
+
+        Routine r2 = new Routine();
+        r2.setUser(testUser);
+        r2.setName("Task B");
+        r2.setSessionGroup("Test Session");
+        r2.setEstimatedMinutes(3);
+        r2 = routineRepository.save(r2);
+
+        List<RoutineSessionCompletionItemDto> items = List.of(
+                new RoutineSessionCompletionItemDto(r1.getId(), 280, "Ottimo"),
+                new RoutineSessionCompletionItemDto(r2.getId(), 170, "Veloce")
+        );
+
+        List<RoutineCompletion> completions = routineService.completeBatchSession(items, testUser);
+
+        assertEquals(2, completions.size());
+        assertEquals(280, completions.get(0).getActualDurationSeconds());
+        assertEquals(170, completions.get(1).getActualDurationSeconds());
+    }
+
+    @Test
+    @DisplayName("Should produce heatmap data with accurate streaks")
+    void testGetHeatmapData() {
+        Routine r = new Routine();
+        r.setUser(testUser);
+        r.setName("Heatmap Task");
+        r.setSessionGroup("Test");
+        r.setEstimatedMinutes(2);
+        r = routineRepository.save(r);
+
+        // Add completions today and yesterday
+        routineService.completeRoutine(r.getId(), 120, null, testUser);
+
+        RoutineCompletion yesterdayComp = new RoutineCompletion(r, LocalDateTime.now().minusDays(1), 110, true);
+        completionRepository.save(yesterdayComp);
+
+        RoutineHeatmapDto heatmap = routineService.getHeatmapData(testUser, 26);
+
+        assertNotNull(heatmap);
+        assertEquals(26, heatmap.totalWeeks());
+        assertTrue(heatmap.totalCompletions() >= 2);
+        assertTrue(heatmap.currentStreak() >= 2);
+        assertTrue(heatmap.longestStreak() >= 2);
     }
 }

@@ -205,6 +205,87 @@ public class RoutineServiceImpl implements RoutineService {
     }
 
     @Override
+    public List<RoutineCompletion> completeBatchSession(List<RoutineSessionCompletionItemDto> items, User user) {
+        if (items == null || items.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<RoutineCompletion> results = new ArrayList<>();
+        for (RoutineSessionCompletionItemDto item : items) {
+            if (item.getRoutineId() != null) {
+                RoutineCompletion completion = completeRoutine(
+                        item.getRoutineId(),
+                        item.getActualDurationSeconds(),
+                        item.getNotes(),
+                        user
+                );
+                results.add(completion);
+            }
+        }
+        return results;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public RoutineHeatmapDto getHeatmapData(User user, int weeks) {
+        LocalDate today = LocalDate.now();
+        LocalDate startDate = today.minusWeeks(weeks).with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+        LocalDate endDate = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
+
+        LocalDateTime startDateTime = startDate.atStartOfDay();
+        List<RoutineCompletion> completions = completionRepository
+                .findByRoutine_UserAndCompletedAtAfterOrderByCompletedAtDesc(user, startDateTime);
+
+        Map<String, Integer> globalCompletions = new HashMap<>();
+        Map<Long, Map<String, Integer>> routineCompletions = new HashMap<>();
+
+        for (RoutineCompletion c : completions) {
+            String dateKey = c.getCompletedAt().toLocalDate().toString();
+            globalCompletions.merge(dateKey, 1, Integer::sum);
+
+            Long routineId = c.getRoutine().getId();
+            routineCompletions.computeIfAbsent(routineId, k -> new HashMap<>()).merge(dateKey, 1, Integer::sum);
+        }
+
+        // Calculate streaks
+        int currentStreak = 0;
+        LocalDate cursor = today;
+        if (!globalCompletions.containsKey(cursor.toString())) {
+            cursor = cursor.minusDays(1);
+        }
+        while (!cursor.isBefore(startDate) && globalCompletions.getOrDefault(cursor.toString(), 0) > 0) {
+            currentStreak++;
+            cursor = cursor.minusDays(1);
+        }
+
+        int longestStreak = 0;
+        int runningStreak = 0;
+        LocalDate scan = startDate;
+        while (!scan.isAfter(today)) {
+            if (globalCompletions.getOrDefault(scan.toString(), 0) > 0) {
+                runningStreak++;
+                if (runningStreak > longestStreak) {
+                    longestStreak = runningStreak;
+                }
+            } else {
+                runningStreak = 0;
+            }
+            scan = scan.plusDays(1);
+        }
+
+        return new RoutineHeatmapDto(
+                startDate,
+                endDate,
+                weeks,
+                globalCompletions,
+                routineCompletions,
+                currentStreak,
+                longestStreak,
+                completions.size(),
+                globalCompletions.size()
+        );
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public List<String> getExistingSessionGroups(User user) {
         return routineRepository.findDistinctSessionGroupsByUser(user);
@@ -218,6 +299,7 @@ public class RoutineServiceImpl implements RoutineService {
         routine.setRecurrenceType(request.getRecurrenceType() != null ? request.getRecurrenceType() : RecurrenceType.DAYS_INTERVAL);
         routine.setFrequencyDays(request.getFrequencyDays() != null && request.getFrequencyDays() > 0 ? request.getFrequencyDays() : 7);
         routine.setTargetDaysOfWeek(request.getTargetDaysOfWeek() != null ? request.getTargetDaysOfWeek().trim() : null);
+        routine.setChecklistItems(request.getParsedChecklistItems());
 
         if (request.getActivityId() != null) {
             Activity activity = activityRepository.findById(request.getActivityId()).orElse(null);

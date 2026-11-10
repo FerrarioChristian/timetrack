@@ -5,11 +5,14 @@ import com.timetrack.auth.SecurityUtil;
 import com.timetrack.auth.User;
 import com.timetrack.auth.UserService;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Web Controller handling requests for cyclical routines, checklists, stopwatch timers, and routine analytics.
@@ -48,6 +51,10 @@ public class RoutineController {
         model.addAttribute("dueRoutines", dueRoutines);
         model.addAttribute("existingGroups", existingGroups);
         model.addAttribute("activities", activityRepository.findByCreatedBy_Username(username));
+
+        // Heatmap consistency data (last 26 weeks)
+        RoutineHeatmapDto heatmapData = routineService.getHeatmapData(user, 26);
+        model.addAttribute("heatmapData", heatmapData);
 
         // Chart data for completions per session
         model.addAttribute("chartLabels", stats.completionsPerSessionGroup().keySet());
@@ -111,5 +118,16 @@ public class RoutineController {
 
         String referer = request.getHeader("Referer");
         return referer != null ? "redirect:" + referer : "redirect:/routines";
+    }
+
+    @PostMapping("/complete-session")
+    @ResponseBody
+    public ResponseEntity<?> completeSession(@RequestBody List<RoutineSessionCompletionItemDto> items) {
+        String username = SecurityUtil.getSessionUsername();
+        if (username == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+
+        User user = userService.findById(username);
+        List<RoutineCompletion> completions = routineService.completeBatchSession(items, user);
+        return ResponseEntity.ok(Map.of("success", true, "count", completions.size()));
     }
 }

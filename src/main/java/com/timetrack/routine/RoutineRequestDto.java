@@ -30,6 +30,11 @@ public class RoutineRequestDto {
 
     private Long activityId;
 
+    /**
+     * Optional sub-items / checklist items, entered as newline-separated strings in the UI.
+     */
+    private String checklistItemsRaw;
+
     public RoutineRequestDto() {
     }
 
@@ -103,5 +108,23 @@ public class RoutineRequestDto {
 
     public void setActivityId(Long activityId) {
         this.activityId = activityId;
+    }
+
+    public String getChecklistItemsRaw() {
+        return checklistItemsRaw;
+    }
+
+    public void setChecklistItemsRaw(String checklistItemsRaw) {
+        this.checklistItemsRaw = checklistItemsRaw;
+    }
+
+    public java.util.List<String> getParsedChecklistItems() {
+        if (checklistItemsRaw == null || checklistItemsRaw.isBlank()) {
+            return java.util.Collections.emptyList();
+        }
+        return java.util.Arrays.stream(checklistItemsRaw.split("[\r\n]+"))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toList();
     }
 }

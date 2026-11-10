@@ -79,6 +79,12 @@ public class Routine {
     @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "routine_checklist_items", joinColumns = @JoinColumn(name = "routine_id"))
+    @Column(name = "item_text", nullable = false)
+    @OrderColumn(name = "sort_order")
+    private List<String> checklistItems = new ArrayList<>();
+
     @OneToMany(mappedBy = "routine", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("completedAt desc")
     private List<RoutineCompletion> completions = new ArrayList<>();
@@ -188,6 +194,14 @@ public class Routine {
 
     public void setCompletions(List<RoutineCompletion> completions) {
         this.completions = completions;
+    }
+
+    public List<String> getChecklistItems() {
+        return checklistItems != null ? checklistItems : Collections.emptyList();
+    }
+
+    public void setChecklistItems(List<String> checklistItems) {
+        this.checklistItems = checklistItems != null ? new ArrayList<>(checklistItems) : new ArrayList<>();
     }
 
     /**
