@@ -18,11 +18,13 @@ public class DashboardController {
     private final StatsService statsService;
     private final UserService userService;
     private final ActivitySessionRepository sessionRepository;
+    private final com.timetrack.config.DemoDataSeeder demoDataSeeder;
 
-    public DashboardController(StatsService statsService, UserService userService, ActivitySessionRepository sessionRepository) {
+    public DashboardController(StatsService statsService, UserService userService, ActivitySessionRepository sessionRepository, com.timetrack.config.DemoDataSeeder demoDataSeeder) {
         this.statsService = statsService;
         this.userService = userService;
         this.sessionRepository = sessionRepository;
+        this.demoDataSeeder = demoDataSeeder;
     }
 
     @GetMapping("/")
@@ -35,6 +37,10 @@ public class DashboardController {
         User user = userService.findById(username);
         if (user == null) {
             return "redirect:/login";
+        }
+
+        if ("demo".equals(username)) {
+            demoDataSeeder.ensureFreshDemoSessions(user);
         }
 
         DashboardStatsDto stats = statsService.getDashboardStats(user);
