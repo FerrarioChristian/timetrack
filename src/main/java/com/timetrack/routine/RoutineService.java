@@ -33,5 +33,7 @@ public interface RoutineService {
 
     RoutineHeatmapDto getHeatmapData(User user, int weeks);
 
+    RoutineCalendarMonthDto getCalendarMonth(int year, int month, User user);
+
     List<String> getExistingSessionGroups(User user);
 }

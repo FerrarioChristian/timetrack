@@ -18,14 +18,17 @@
     </div>
 
     <!-- Navigation Tabs -->
-    <div class="flex border-b border-border">
-        <button id="tabBtnToday" onclick="switchTab('today')" class="px-4 py-2 text-sm font-medium border-b-2 border-primary text-foreground transition-colors">
+    <div class="flex border-b border-border overflow-x-auto">
+        <button id="tabBtnToday" onclick="switchTab('today')" class="px-4 py-2 text-sm font-medium border-b-2 border-primary text-foreground transition-colors whitespace-nowrap">
             Oggi & Sessioni
         </button>
-        <button id="tabBtnAll" onclick="switchTab('all')" class="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-mutedForeground hover:text-foreground transition-colors">
+        <button id="tabBtnCalendar" onclick="switchTab('calendar')" class="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-mutedForeground hover:text-foreground transition-colors whitespace-nowrap">
+            Calendario
+        </button>
+        <button id="tabBtnAll" onclick="switchTab('all')" class="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-mutedForeground hover:text-foreground transition-colors whitespace-nowrap">
             Tutte le Routine (<span th:text="${stats.totalRoutines}">0</span>)
         </button>
-        <button id="tabBtnStats" onclick="switchTab('stats')" class="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-mutedForeground hover:text-foreground transition-colors">
+        <button id="tabBtnStats" onclick="switchTab('stats')" class="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-mutedForeground hover:text-foreground transition-colors whitespace-nowrap">
             Statistiche & Analisi
         </button>
     </div>
@@ -213,7 +216,81 @@
 
     </div>
 
-    <!-- TAB 2: TUTTE LE ROUTINE -->
+    <!-- TAB 2: CALENDARIO INTERATTIVO (MESE E SETTIMANA) -->
+    <div id="tabCalendar" class="hidden space-y-6">
+        
+        <!-- Calendar Control Bar -->
+        <div class="rounded-xl border border-border bg-card p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            
+            <!-- Month Nav -->
+            <div class="flex items-center gap-3">
+                <button type="button" onclick="prevCalendarMonth()" title="Mese precedente" class="inline-flex items-center justify-center rounded-lg border border-border bg-background hover:bg-accent h-9 w-9 text-mutedForeground hover:text-foreground transition-colors">
+                    <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                </button>
+                <h2 id="calendarMonthTitle" class="text-xl font-bold tracking-tight min-w-[180px] text-foreground" th:text="${calendarMonth.monthName}">Novembre 2026</h2>
+                <button type="button" onclick="nextCalendarMonth()" title="Mese successivo" class="inline-flex items-center justify-center rounded-lg border border-border bg-background hover:bg-accent h-9 w-9 text-mutedForeground hover:text-foreground transition-colors">
+                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                </button>
+                <button type="button" onclick="todayCalendarMonth()" class="px-3 py-1.5 rounded-lg border border-border text-xs font-medium hover:bg-accent text-mutedForeground hover:text-foreground transition-colors">
+                    Oggi
+                </button>
+            </div>
+
+            <!-- Month Quick Metrics & View Toggle -->
+            <div class="flex flex-wrap items-center gap-2 text-xs">
+                <div class="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1">
+                    <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                    <span><strong id="calCompletedCount" th:text="${calendarMonth.totalCompleted}">0</strong> completate</span>
+                </div>
+                <div class="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 px-3 py-1">
+                    <i data-lucide="clock" class="w-3.5 h-3.5"></i>
+                    <span><strong id="calDueCount" th:text="${calendarMonth.totalDue}">0</strong> da fare</span>
+                </div>
+                <div class="inline-flex items-center gap-1.5 rounded-full bg-zinc-800 text-zinc-300 border border-zinc-700 px-3 py-1">
+                    <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+                    <span><strong id="calProjectedCount" th:text="${calendarMonth.totalProjected}">0</strong> future (~<span id="calEstMinutes" th:text="${calendarMonth.totalEstimatedMinutes}">0</span>m)</span>
+                </div>
+
+                <div class="inline-flex rounded-lg border border-border p-0.5 bg-accent/30 ml-auto">
+                    <button type="button" id="calViewBtnMonth" onclick="switchCalendarView('month')" class="px-2.5 py-1 rounded-md text-xs font-semibold bg-primary text-primaryForeground transition-all">
+                        Mese
+                    </button>
+                    <button type="button" id="calViewBtnWeek" onclick="switchCalendarView('week')" class="px-2.5 py-1 rounded-md text-xs font-medium text-mutedForeground hover:text-foreground transition-all">
+                        Settimana
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Month Grid View -->
+        <div id="calendarMonthWrapper" class="rounded-xl border border-border bg-card overflow-hidden">
+            <!-- Weekday Headers -->
+            <div class="grid grid-cols-7 border-b border-border bg-accent/40 text-center text-xs font-semibold uppercase tracking-wider text-mutedForeground py-2.5">
+                <div>Lun</div>
+                <div>Mar</div>
+                <div>Mer</div>
+                <div>Gio</div>
+                <div>Ven</div>
+                <div>Sab</div>
+                <div>Dom</div>
+            </div>
+
+            <!-- Days Grid -->
+            <div id="calendarMonthGrid" class="grid grid-cols-7 divide-x divide-y divide-border bg-background">
+                <!-- Dynamically populated day cells -->
+            </div>
+        </div>
+
+        <!-- Week View -->
+        <div id="calendarWeekWrapper" class="hidden rounded-xl border border-border bg-card overflow-hidden">
+            <div id="calendarWeekGrid" class="grid grid-cols-1 md:grid-cols-7 divide-y md:divide-y-0 md:divide-x divide-border bg-background">
+                <!-- Dynamically populated 7 days of current week -->
+            </div>
+        </div>
+
+    </div>
+
+    <!-- TAB 3: TUTTE LE ROUTINE -->
     <div id="tabAll" class="hidden space-y-6">
         <div class="rounded-xl border border-border bg-card overflow-hidden">
             <div class="px-6 py-4 border-b border-border bg-accent/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -311,7 +388,7 @@
         </div>
     </div>
 
-    <!-- TAB 3: STATISTICHE & REPORT -->
+    <!-- TAB 4: STATISTICHE & REPORT -->
     <div id="tabStats" class="hidden space-y-8">
         <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             <div class="rounded-xl border border-border bg-card p-6">
@@ -521,10 +598,10 @@
                         <input type="text" id="routineGroupInput" name="sessionGroup" list="sessionGroupList" required placeholder="es. Pulizia Bagno, Cura Personale..." class="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                         <datalist id="sessionGroupList">
                             <option th:each="grp : ${existingGroups}" th:value="${grp}"></option>
-                            <option value="Pulizia Bagno"></option>
-                            <option value="Cucina & Casa"></option>
-                            <option value="Cura Personale"></option>
-                            <option value="Dispositivi & Salute"></option>
+                            <option value="Manutenzione & Setup"></option>
+                            <option value="Cura della Casa"></option>
+                            <option value="Benessere & Abitudini"></option>
+                            <option value="Studio & Crescita"></option>
                         </datalist>
                     </div>
 
@@ -737,6 +814,32 @@
         </div>
     </div>
 
+    <!-- MODAL 4: DETTAGLIO GIORNATA CALENDARIO -->
+    <div id="calendarDayModal" class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-card text-cardForeground border border-border shadow-2xl rounded-2xl max-w-lg w-full p-6 text-left max-h-[85vh] flex flex-col">
+            
+            <div class="flex items-center justify-between pb-3 border-b border-border mb-4">
+                <div>
+                    <h2 id="calDayModalTitle" class="text-xl font-bold tracking-tight text-foreground">11 Novembre 2026</h2>
+                    <p id="calDayModalSubtitle" class="text-xs text-mutedForeground mt-0.5">3 routine programmate • ~25 min</p>
+                </div>
+                <button type="button" onclick="closeCalendarDayModal()" class="text-mutedForeground hover:text-foreground">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div id="calDayEventsList" class="space-y-3 overflow-y-auto flex-1 pr-1">
+                <!-- Dynamically populated day event cards -->
+            </div>
+
+            <div class="pt-4 border-t border-border mt-4 flex justify-end">
+                <button type="button" onclick="closeCalendarDayModal()" class="inline-flex items-center justify-center rounded-md text-sm font-medium border border-border bg-accent/40 hover:bg-accent text-accentForeground h-9 px-4">
+                    Chiudi
+                </button>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <!-- Scripts -->
@@ -744,17 +847,21 @@
     /*<![CDATA[*/
     const csrfToken = /*[[${_csrf.token}]]*/ '';
     const heatmapRaw = /*[[${heatmapData}]]*/ null;
+    const initialCalendarData = /*[[${calendarMonth}]]*/ null;
     const allRoutinesData = /*[[${allRoutines}]]*/ [];
     const dueRoutinesData = /*[[${dueRoutines}]]*/ [];
 
     // Tabs Switcher
     function switchTab(tabId) {
         document.getElementById('tabToday').classList.add('hidden');
+        document.getElementById('tabCalendar').classList.add('hidden');
         document.getElementById('tabAll').classList.add('hidden');
         document.getElementById('tabStats').classList.add('hidden');
 
         document.getElementById('tabBtnToday').classList.replace('border-primary', 'border-transparent');
         document.getElementById('tabBtnToday').classList.replace('text-foreground', 'text-mutedForeground');
+        document.getElementById('tabBtnCalendar').classList.replace('border-primary', 'border-transparent');
+        document.getElementById('tabBtnCalendar').classList.replace('text-foreground', 'text-mutedForeground');
         document.getElementById('tabBtnAll').classList.replace('border-primary', 'border-transparent');
         document.getElementById('tabBtnAll').classList.replace('text-foreground', 'text-mutedForeground');
         document.getElementById('tabBtnStats').classList.replace('border-primary', 'border-transparent');
@@ -764,6 +871,11 @@
             document.getElementById('tabToday').classList.remove('hidden');
             document.getElementById('tabBtnToday').classList.replace('border-transparent', 'border-primary');
             document.getElementById('tabBtnToday').classList.replace('text-mutedForeground', 'text-foreground');
+        } else if (tabId === 'calendar') {
+            document.getElementById('tabCalendar').classList.remove('hidden');
+            document.getElementById('tabBtnCalendar').classList.replace('border-transparent', 'border-primary');
+            document.getElementById('tabBtnCalendar').classList.replace('text-mutedForeground', 'text-foreground');
+            initCalendar();
         } else if (tabId === 'all') {
             document.getElementById('tabAll').classList.remove('hidden');
             document.getElementById('tabBtnAll').classList.replace('border-transparent', 'border-primary');
@@ -1063,7 +1175,6 @@
     let runnerResults = [];
 
     function startSessionRunner(sessionGroup) {
-        // Collect all due routines for this sessionGroup
         runnerQueue = dueRoutinesData.filter(r => r.sessionGroup === sessionGroup);
         if (runnerQueue.length === 0) {
             alert('Nessuna routine in scadenza per questa sessione.');
@@ -1274,7 +1385,349 @@
     }
 
     // ==========================================
-    // 3. CONSISTENCY HEATMAP (GITHUB-STYLE)
+    // 3. CALENDARIO INTERATTIVO (MESE & SETTIMANA)
+    // ==========================================
+    let calCurrentYear = initialCalendarData ? initialCalendarData.year : new Date().getFullYear();
+    let calCurrentMonth = initialCalendarData ? initialCalendarData.month : (new Date().getMonth() + 1);
+    let calCurrentData = initialCalendarData;
+    let calCurrentView = 'month'; // 'month' or 'week'
+
+    function initCalendar() {
+        if (!calCurrentData) {
+            loadCalendar(calCurrentYear, calCurrentMonth);
+        } else {
+            renderCurrentCalendar();
+        }
+    }
+
+    async function loadCalendar(year, month) {
+        try {
+            const resp = await fetch(`/routines/api/calendar?year=${year}&month=${month}`);
+            if (resp.ok) {
+                calCurrentData = await resp.json();
+                calCurrentYear = calCurrentData.year;
+                calCurrentMonth = calCurrentData.month;
+                renderCurrentCalendar();
+            }
+        } catch (e) {
+            console.error('Failed to load calendar data', e);
+        }
+    }
+
+    function prevCalendarMonth() {
+        let y = calCurrentYear;
+        let m = calCurrentMonth - 1;
+        if (m < 1) {
+            m = 12;
+            y--;
+        }
+        loadCalendar(y, m);
+    }
+
+    function nextCalendarMonth() {
+        let y = calCurrentYear;
+        let m = calCurrentMonth + 1;
+        if (m > 12) {
+            m = 1;
+            y++;
+        }
+        loadCalendar(y, m);
+    }
+
+    function todayCalendarMonth() {
+        const now = new Date();
+        loadCalendar(now.getFullYear(), now.getMonth() + 1);
+    }
+
+    function switchCalendarView(view) {
+        calCurrentView = view;
+        const btnM = document.getElementById('calViewBtnMonth');
+        const btnW = document.getElementById('calViewBtnWeek');
+        const wrapM = document.getElementById('calendarMonthWrapper');
+        const wrapW = document.getElementById('calendarWeekWrapper');
+
+        if (view === 'month') {
+            btnM.className = 'px-2.5 py-1 rounded-md text-xs font-semibold bg-primary text-primaryForeground transition-all';
+            btnW.className = 'px-2.5 py-1 rounded-md text-xs font-medium text-mutedForeground hover:text-foreground transition-all';
+            wrapM.classList.remove('hidden');
+            wrapW.classList.add('hidden');
+        } else {
+            btnW.className = 'px-2.5 py-1 rounded-md text-xs font-semibold bg-primary text-primaryForeground transition-all';
+            btnM.className = 'px-2.5 py-1 rounded-md text-xs font-medium text-mutedForeground hover:text-foreground transition-all';
+            wrapM.classList.add('hidden');
+            wrapW.classList.remove('hidden');
+        }
+        renderCurrentCalendar();
+    }
+
+    function renderCurrentCalendar() {
+        if (!calCurrentData) return;
+
+        // Update title and stats
+        document.getElementById('calendarMonthTitle').textContent = calCurrentData.monthName;
+        document.getElementById('calCompletedCount').textContent = calCurrentData.totalCompleted;
+        document.getElementById('calDueCount').textContent = calCurrentData.totalDue;
+        document.getElementById('calProjectedCount').textContent = calCurrentData.totalProjected;
+        document.getElementById('calEstMinutes').textContent = calCurrentData.totalEstimatedMinutes;
+
+        if (calCurrentView === 'month') {
+            renderMonthGrid();
+        } else {
+            renderWeekGrid();
+        }
+        lucide.createIcons();
+    }
+
+    function renderMonthGrid() {
+        const grid = document.getElementById('calendarMonthGrid');
+        grid.innerHTML = '';
+
+        const start = new Date(calCurrentData.startDate);
+        const end = new Date(calCurrentData.endDate);
+        const todayStr = new Date().toISOString().split('T')[0];
+
+        let cursor = new Date(start);
+        while (cursor <= end) {
+            const dateStr = cursor.toISOString().split('T')[0];
+            const isCurrentMonth = (cursor.getMonth() + 1) === calCurrentData.month;
+            const isToday = (dateStr === todayStr);
+
+            const events = calCurrentData.eventsByDate[dateStr] || [];
+
+            const cell = document.createElement('div');
+            cell.className = `min-h-[105px] p-2 flex flex-col transition-colors cursor-pointer hover:bg-accent/25 relative ${
+                !isCurrentMonth ? 'opacity-40 bg-zinc-950/40 text-mutedForeground' : 'bg-card'
+            } ${isToday ? 'border-2 border-emerald-500/80 bg-emerald-500/5' : ''}`;
+            
+            cell.setAttribute('onclick', `openCalendarDay('${dateStr}')`);
+
+            // Header of day cell: day number + summary badge
+            let headerHtml = `
+                <div class="flex items-center justify-between mb-1.5">
+                    <span class="text-xs font-semibold ${isToday ? 'w-5 h-5 rounded-full bg-emerald-500 text-black flex items-center justify-center font-bold' : ''}">
+                        ${cursor.getDate()}
+                    </span>
+                    ${events.length > 0 ? `<span class="text-[0.65rem] text-mutedForeground font-mono font-medium">${events.length}</span>` : ''}
+                </div>
+            `;
+
+            // Chips of events
+            let eventsHtml = '<div class="space-y-1 overflow-hidden flex-1">';
+            const displayLimit = 3;
+            events.slice(0, displayLimit).forEach(ev => {
+                let badgeClass = '';
+                let iconName = 'calendar';
+                if (ev.status === 'COMPLETED') {
+                    badgeClass = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+                    iconName = 'check';
+                } else if (ev.status === 'DUE_TODAY') {
+                    badgeClass = 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+                    iconName = 'clock';
+                } else if (ev.status === 'OVERDUE') {
+                    badgeClass = 'bg-red-500/10 text-red-400 border-red-500/20';
+                    iconName = 'alert-circle';
+                } else {
+                    badgeClass = 'bg-zinc-800/80 text-zinc-300 border-zinc-700/60';
+                    iconName = 'calendar';
+                }
+
+                eventsHtml += `
+                    <div class="truncate text-[0.65rem] px-1.5 py-0.5 rounded border ${badgeClass} font-medium flex items-center gap-1" title="${ev.name} (${ev.sessionGroup})">
+                        <i data-lucide="${iconName}" class="w-2.5 h-2.5 flex-shrink-0"></i>
+                        <span class="truncate">${ev.name}</span>
+                    </div>
+                `;
+            });
+
+            if (events.length > displayLimit) {
+                eventsHtml += `<div class="text-[0.62rem] text-mutedForeground font-medium pl-1">+${events.length - displayLimit} altri</div>`;
+            }
+            eventsHtml += '</div>';
+
+            cell.innerHTML = headerHtml + eventsHtml;
+            grid.appendChild(cell);
+
+            cursor.setDate(cursor.getDate() + 1);
+        }
+    }
+
+    function renderWeekGrid() {
+        const grid = document.getElementById('calendarWeekGrid');
+        grid.innerHTML = '';
+
+        // Pick current week (Monday to Sunday) containing today or middle of month
+        const now = new Date();
+        let mon = new Date(now);
+        const day = mon.getDay() || 7;
+        mon.setDate(mon.getDate() - day + 1);
+
+        const weekdayNames = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato', 'Domenica'];
+        const todayStr = now.toISOString().split('T')[0];
+
+        for (let i = 0; i < 7; i++) {
+            const cur = new Date(mon);
+            cur.setDate(mon.getDate() + i);
+            const dateStr = cur.toISOString().split('T')[0];
+            const isToday = (dateStr === todayStr);
+            const events = calCurrentData.eventsByDate[dateStr] || [];
+
+            const col = document.createElement('div');
+            col.className = `p-4 flex flex-col min-h-[300px] cursor-pointer hover:bg-accent/20 transition-colors ${
+                isToday ? 'bg-emerald-500/5 border-emerald-500/30' : ''
+            }`;
+            col.setAttribute('onclick', `openCalendarDay('${dateStr}')`);
+
+            let header = `
+                <div class="pb-3 border-b border-border mb-3 flex items-center justify-between">
+                    <div>
+                        <div class="text-xs text-mutedForeground font-medium">${weekdayNames[i]}</div>
+                        <div class="text-lg font-bold ${isToday ? 'text-emerald-400' : 'text-foreground'}">${cur.getDate()}</div>
+                    </div>
+                    ${events.length > 0 ? `<span class="rounded-full bg-accent px-2 py-0.5 text-xs font-mono">${events.length}</span>` : ''}
+                </div>
+            `;
+
+            let eventList = '<div class="space-y-2 flex-1">';
+            if (events.length === 0) {
+                eventList += '<div class="text-xs text-mutedForeground/60 italic py-4 text-center">Nessuna routine</div>';
+            } else {
+                events.forEach(ev => {
+                    let badgeClass = ev.status === 'COMPLETED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                        : (ev.status === 'DUE_TODAY' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                        : (ev.status === 'OVERDUE' ? 'bg-red-500/10 text-red-400 border-red-500/20'
+                        : 'bg-zinc-800 text-zinc-300 border-zinc-700'));
+
+                    eventList += `
+                        <div class="p-2.5 rounded-lg border ${badgeClass} text-xs space-y-1">
+                            <div class="font-semibold truncate">${ev.name}</div>
+                            <div class="text-[0.65rem] opacity-80 flex items-center justify-between">
+                                <span>${ev.sessionGroup}</span>
+                                <span class="font-mono">~${ev.estimatedMinutes}m</span>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            eventList += '</div>';
+
+            col.innerHTML = header + eventList;
+            grid.appendChild(col);
+        }
+    }
+
+    function openCalendarDay(dateStr) {
+        if (!calCurrentData || !calCurrentData.eventsByDate) return;
+
+        const dateObj = new Date(dateStr + 'T00:00:00');
+        const formattedDate = dateObj.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+        const capitalizedDate = formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1);
+
+        const events = calCurrentData.eventsByDate[dateStr] || [];
+
+        document.getElementById('calDayModalTitle').textContent = capitalizedDate;
+
+        let totalEst = events.reduce((acc, ev) => acc + (ev.estimatedMinutes || 5), 0);
+        document.getElementById('calDayModalSubtitle').textContent = events.length === 1 
+            ? `1 routine per questa giornata • ~${totalEst} min stimati`
+            : `${events.length} routine per questa giornata • ~${totalEst} min stimati`;
+
+        const container = document.getElementById('calDayEventsList');
+        container.innerHTML = '';
+
+        if (events.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-10 text-mutedForeground">
+                    <i data-lucide="calendar-check" class="w-8 h-8 mx-auto mb-2 text-zinc-600"></i>
+                    <p class="text-sm font-medium">Nessuna routine programmata o svolta in questa data.</p>
+                </div>
+            `;
+        } else {
+            events.forEach(ev => {
+                const card = document.createElement('div');
+                card.className = 'p-4 rounded-xl border border-border bg-background flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-accent/15 transition-colors';
+
+                let statusBadge = '';
+                let actionBtn = '';
+
+                if (ev.status === 'COMPLETED') {
+                    statusBadge = `<span class="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-0.5 text-xs font-semibold"><i data-lucide="check" class="w-3 h-3"></i> Completata (${ev.actualDurationSeconds ? Math.round(ev.actualDurationSeconds/60) + ' min' : 'ok'})</span>`;
+                } else if (ev.status === 'DUE_TODAY') {
+                    statusBadge = `<span class="inline-flex items-center gap-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2.5 py-0.5 text-xs font-semibold"><i data-lucide="clock" class="w-3 h-3"></i> Da fare oggi</span>`;
+                    actionBtn = `
+                        <form action="/routines/${ev.routineId}/complete" method="post" class="inline">
+                            <input type="hidden" name="_csrf" value="${csrfToken}" />
+                            <button type="submit" class="inline-flex items-center justify-center rounded-md text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-500 h-8 px-3 gap-1.5 transition-colors">
+                                <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                                <span>Completa</span>
+                            </button>
+                        </form>
+                    `;
+                } else if (ev.status === 'OVERDUE') {
+                    statusBadge = `<span class="inline-flex items-center gap-1 rounded-full bg-red-500/10 text-red-400 border border-red-500/20 px-2.5 py-0.5 text-xs font-semibold"><i data-lucide="alert-circle" class="w-3 h-3"></i> In ritardo</span>`;
+                    actionBtn = `
+                        <form action="/routines/${ev.routineId}/complete" method="post" class="inline">
+                            <input type="hidden" name="_csrf" value="${csrfToken}" />
+                            <button type="submit" class="inline-flex items-center justify-center rounded-md text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-500 h-8 px-3 gap-1.5 transition-colors">
+                                <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                                <span>Completa</span>
+                            </button>
+                        </form>
+                    `;
+                } else {
+                    statusBadge = `<span class="inline-flex items-center gap-1 rounded-full bg-zinc-800 text-zinc-300 border border-zinc-700 px-2.5 py-0.5 text-xs font-semibold"><i data-lucide="calendar" class="w-3 h-3"></i> Programmata</span>`;
+                    actionBtn = `
+                        <form action="/routines/${ev.routineId}/complete" method="post" class="inline">
+                            <input type="hidden" name="_csrf" value="${csrfToken}" />
+                            <button type="submit" title="Completa in anticipo oggi" class="inline-flex items-center justify-center rounded-md text-xs font-medium border border-border hover:bg-accent text-mutedForeground hover:text-foreground h-8 px-2.5 gap-1 transition-colors">
+                                <i data-lucide="fast-forward" class="w-3 h-3 text-emerald-400"></i>
+                                <span>Anticipa</span>
+                            </button>
+                        </form>
+                    `;
+                }
+
+                // Checklist tags preview if present
+                let checklistHtml = '';
+                if (ev.checklistItems && ev.checklistItems.length > 0) {
+                    checklistHtml = '<div class="flex flex-wrap gap-1 pt-1.5">';
+                    ev.checklistItems.forEach(item => {
+                        checklistHtml += `<span class="inline-flex items-center gap-1 rounded bg-zinc-800/80 px-1.5 py-0.5 text-[0.65rem] text-zinc-300 border border-zinc-700/50"><i data-lucide="check" class="w-2.5 h-2.5 text-emerald-400"></i>${item}</span>`;
+                    });
+                    checklistHtml += '</div>';
+                }
+
+                card.innerHTML = `
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <h4 class="font-semibold text-sm text-foreground">${ev.name}</h4>
+                            <span class="inline-flex items-center rounded-full bg-accent px-2 py-0.5 text-[0.65rem] font-medium text-accentForeground">${ev.sessionGroup}</span>
+                            ${statusBadge}
+                        </div>
+                        <div class="text-xs text-mutedForeground flex items-center gap-2">
+                            <span>Stima: ~${ev.estimatedMinutes} min</span>
+                            <span>•</span>
+                            <span>${ev.recurrenceDescription}</span>
+                        </div>
+                        ${checklistHtml}
+                    </div>
+                    <div class="flex items-center gap-2 self-end sm:self-center">
+                        ${actionBtn}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        document.getElementById('calendarDayModal').classList.remove('hidden');
+        lucide.createIcons();
+    }
+
+    function closeCalendarDayModal() {
+        document.getElementById('calendarDayModal').classList.add('hidden');
+    }
+
+    // ==========================================
+    // 4. CONSISTENCY HEATMAP (GITHUB-STYLE)
     // ==========================================
     function renderHeatmap(filterRoutineId) {
         if (!heatmapRaw) return;
@@ -1365,7 +1818,7 @@
     }
 
     // ==========================================
-    // 4. CHART.JS
+    // 5. CHART.JS
     // ==========================================
     let routineChartInstance = null;
     function initStatsChart() {

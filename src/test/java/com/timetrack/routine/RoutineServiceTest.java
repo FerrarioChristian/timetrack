@@ -223,4 +223,31 @@ class RoutineServiceTest {
         assertTrue(heatmap.currentStreak() >= 2);
         assertTrue(heatmap.longestStreak() >= 2);
     }
+
+    @Test
+    @DisplayName("Should build calendar month with completions, current tasks, and future projections")
+    void testGetCalendarMonth() {
+        Routine r = new Routine();
+        r.setUser(testUser);
+        r.setName("Calendar Task");
+        r.setSessionGroup("Test Area");
+        r.setEstimatedMinutes(10);
+        r.setRecurrenceType(RecurrenceType.DAYS_INTERVAL);
+        r.setFrequencyDays(5);
+        r.setLastCompletedAt(LocalDateTime.now().minusDays(5));
+        r = routineRepository.save(r);
+
+        // Record a completion
+        RoutineCompletion completion = new RoutineCompletion(r, LocalDateTime.now().minusDays(5), 300, true);
+        completionRepository.save(completion);
+
+        java.time.LocalDate now = java.time.LocalDate.now();
+        RoutineCalendarMonthDto calendarMonth = routineService.getCalendarMonth(now.getYear(), now.getMonthValue(), testUser);
+
+        assertNotNull(calendarMonth);
+        assertEquals(now.getYear(), calendarMonth.year());
+        assertEquals(now.getMonthValue(), calendarMonth.month());
+        assertNotNull(calendarMonth.monthName());
+        assertFalse(calendarMonth.eventsByDate().isEmpty());
+    }
 }

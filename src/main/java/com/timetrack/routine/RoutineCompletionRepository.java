@@ -17,6 +17,8 @@ public interface RoutineCompletionRepository extends JpaRepository<RoutineComple
 
     List<RoutineCompletion> findByRoutine_UserAndCompletedAtAfterOrderByCompletedAtDesc(User user, LocalDateTime after);
 
+    List<RoutineCompletion> findByRoutine_UserAndCompletedAtBetweenOrderByCompletedAtAsc(User user, LocalDateTime start, LocalDateTime end);
+
     List<RoutineCompletion> findByRoutineOrderByCompletedAtDesc(Routine routine);
 
     long countByRoutine_User(User user);

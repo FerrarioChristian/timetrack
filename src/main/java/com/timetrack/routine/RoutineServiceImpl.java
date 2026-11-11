@@ -10,6 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.TextStyle;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -282,6 +284,203 @@ public class RoutineServiceImpl implements RoutineService {
                 longestStreak,
                 completions.size(),
                 globalCompletions.size()
+        );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public RoutineCalendarMonthDto getCalendarMonth(int year, int month, User user) {
+        LocalDate firstDayOfMonth = LocalDate.of(year, month, 1);
+        LocalDate lastDayOfMonth = firstDayOfMonth.plusMonths(1).minusDays(1);
+        LocalDate gridStartDate = firstDayOfMonth.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+        LocalDate gridEndDate = lastDayOfMonth.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
+
+        String rawMonth = firstDayOfMonth.getMonth().getDisplayName(TextStyle.FULL, Locale.ITALIAN);
+        String monthName = Character.toUpperCase(rawMonth.charAt(0)) + rawMonth.substring(1) + " " + year;
+
+        Map<String, List<RoutineCalendarEventDto>> eventsByDate = new LinkedHashMap<>();
+        LocalDate initCursor = gridStartDate;
+        while (!initCursor.isAfter(gridEndDate)) {
+            eventsByDate.put(initCursor.toString(), new ArrayList<>());
+            initCursor = initCursor.plusDays(1);
+        }
+
+        LocalDate today = LocalDate.now();
+
+        // 1. Historical completions within [gridStartDate, gridEndDate]
+        LocalDateTime startDateTime = gridStartDate.atStartOfDay();
+        LocalDateTime endDateTime = gridEndDate.atTime(LocalTime.MAX);
+        List<RoutineCompletion> completions = completionRepository
+                .findByRoutine_UserAndCompletedAtBetweenOrderByCompletedAtAsc(user, startDateTime, endDateTime);
+
+        for (RoutineCompletion c : completions) {
+            LocalDate cDate = c.getCompletedAt().toLocalDate();
+            String key = cDate.toString();
+            if (eventsByDate.containsKey(key)) {
+                eventsByDate.get(key).add(new RoutineCalendarEventDto(
+                        c.getRoutine().getId(),
+                        c.getRoutine().getName(),
+                        c.getRoutine().getSessionGroup(),
+                        c.getRoutine().getEstimatedMinutes(),
+                        c.getActualDurationSeconds(),
+                        cDate,
+                        "COMPLETED",
+                        c.getOnTime(),
+                        c.getRoutine().getRecurrenceDescription(),
+                        c.getRoutine().getChecklistItems()
+                ));
+            }
+        }
+
+        // 2. All user routines for current pending & future projections
+        List<Routine> allRoutines = routineRepository.findByUserOrderBySessionGroupAscNameAsc(user);
+
+        // Add today's pending/overdue routines if not already completed today
+        if (!today.isBefore(gridStartDate) && !today.isAfter(gridEndDate)) {
+            String todayKey = today.toString();
+            List<RoutineCalendarEventDto> todayEvents = eventsByDate.get(todayKey);
+            Set<Long> completedRoutineIdsToday = todayEvents.stream()
+                    .map(RoutineCalendarEventDto::routineId)
+                    .collect(Collectors.toSet());
+
+            for (Routine r : allRoutines) {
+                if (completedRoutineIdsToday.contains(r.getId())) {
+                    continue;
+                }
+                RoutineStatus status = r.getStatus();
+                if (status == RoutineStatus.DUE_TODAY) {
+                    todayEvents.add(new RoutineCalendarEventDto(
+                            r.getId(),
+                            r.getName(),
+                            r.getSessionGroup(),
+                            r.getEstimatedMinutes(),
+                            null,
+                            today,
+                            "DUE_TODAY",
+                            true,
+                            r.getRecurrenceDescription(),
+                            r.getChecklistItems()
+                    ));
+                } else if (status == RoutineStatus.OVERDUE) {
+                    todayEvents.add(new RoutineCalendarEventDto(
+                            r.getId(),
+                            r.getName(),
+                            r.getSessionGroup(),
+                            r.getEstimatedMinutes(),
+                            null,
+                            today,
+                            "OVERDUE",
+                            false,
+                            r.getRecurrenceDescription(),
+                            r.getChecklistItems()
+                    ));
+                }
+            }
+        }
+
+        // 3. Project future occurrences from max(today + 1, gridStartDate) to gridEndDate
+        LocalDate projectionStart = today.plusDays(1);
+        if (projectionStart.isBefore(gridStartDate)) {
+            projectionStart = gridStartDate;
+        }
+
+        if (!projectionStart.isAfter(gridEndDate)) {
+            for (Routine r : allRoutines) {
+                if (r.getRecurrenceType() == RecurrenceType.DAYS_INTERVAL) {
+                    int interval = (r.getFrequencyDays() != null && r.getFrequencyDays() > 0) ? r.getFrequencyDays() : 7;
+                    LocalDate nextDue = r.getNextDueDate();
+                    LocalDate cursor = nextDue;
+                    if (cursor.isBefore(today) || cursor.isEqual(today)) {
+                        cursor = today.plusDays(interval);
+                    }
+                    while (!cursor.isAfter(gridEndDate)) {
+                        if (!cursor.isBefore(projectionStart)) {
+                            String key = cursor.toString();
+                            if (eventsByDate.containsKey(key)) {
+                                eventsByDate.get(key).add(new RoutineCalendarEventDto(
+                                        r.getId(),
+                                        r.getName(),
+                                        r.getSessionGroup(),
+                                        r.getEstimatedMinutes(),
+                                        null,
+                                        cursor,
+                                        "PROJECTED_FUTURE",
+                                        true,
+                                        r.getRecurrenceDescription(),
+                                        r.getChecklistItems()
+                                ));
+                            }
+                        }
+                        cursor = cursor.plusDays(interval);
+                    }
+                } else if (r.getRecurrenceType() == RecurrenceType.WEEKLY_DAYS) {
+                    Set<DayOfWeek> days = r.parseDaysOfWeek();
+                    if (days.isEmpty()) {
+                        days = EnumSet.of(DayOfWeek.MONDAY);
+                    }
+                    LocalDate scan = projectionStart;
+                    while (!scan.isAfter(gridEndDate)) {
+                        if (days.contains(scan.getDayOfWeek())) {
+                            String key = scan.toString();
+                            if (eventsByDate.containsKey(key)) {
+                                eventsByDate.get(key).add(new RoutineCalendarEventDto(
+                                        r.getId(),
+                                        r.getName(),
+                                        r.getSessionGroup(),
+                                        r.getEstimatedMinutes(),
+                                        null,
+                                        scan,
+                                        "PROJECTED_FUTURE",
+                                        true,
+                                        r.getRecurrenceDescription(),
+                                        r.getChecklistItems()
+                                ));
+                            }
+                        }
+                        scan = scan.plusDays(1);
+                    }
+                }
+            }
+        }
+
+        // Calculate totals strictly within [firstDayOfMonth, lastDayOfMonth]
+        int totalCompleted = 0;
+        int totalDue = 0;
+        int totalProjected = 0;
+        int totalEstimatedMinutes = 0;
+
+        LocalDate countCursor = firstDayOfMonth;
+        while (!countCursor.isAfter(lastDayOfMonth)) {
+            List<RoutineCalendarEventDto> dayEvents = eventsByDate.getOrDefault(countCursor.toString(), Collections.emptyList());
+            for (RoutineCalendarEventDto ev : dayEvents) {
+                switch (ev.status()) {
+                    case "COMPLETED" -> totalCompleted++;
+                    case "DUE_TODAY", "OVERDUE" -> {
+                        totalDue++;
+                        totalEstimatedMinutes += (ev.estimatedMinutes() != null ? ev.estimatedMinutes() : 5);
+                    }
+                    case "PROJECTED_FUTURE" -> {
+                        totalProjected++;
+                        totalEstimatedMinutes += (ev.estimatedMinutes() != null ? ev.estimatedMinutes() : 5);
+                    }
+                }
+            }
+            countCursor = countCursor.plusDays(1);
+        }
+
+        return new RoutineCalendarMonthDto(
+                year,
+                month,
+                monthName,
+                gridStartDate,
+                gridEndDate,
+                firstDayOfMonth,
+                lastDayOfMonth,
+                totalCompleted,
+                totalDue,
+                totalProjected,
+                totalEstimatedMinutes,
+                eventsByDate
         );
     }
 
