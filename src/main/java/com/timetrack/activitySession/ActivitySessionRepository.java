@@ -14,5 +14,7 @@ public interface ActivitySessionRepository extends JpaRepository<ActivitySession
     
     java.util.List<ActivitySession> findByActivityCreatedByAndStartTimeAfter(com.timetrack.auth.User user, java.time.LocalDateTime startTime);
     
+    java.util.List<ActivitySession> findByActivityCreatedByAndStartTimeBetween(com.timetrack.auth.User user, java.time.LocalDateTime start, java.time.LocalDateTime end);
+    
     java.util.List<ActivitySession> findByActivityCreatedByAndEndTimeIsNull(com.timetrack.auth.User user);
 }

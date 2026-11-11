@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{fragments/layout :: layout('Calendario & Planner - Timetrack', ~{::div})}">
+<body>
+<div class="max-w-6xl mx-auto space-y-8">
+
+    <!-- Top Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold tracking-tight text-foreground">Calendario & Planner</h1>
+            <p class="text-mutedForeground mt-1">Visione unificata della tua giornata: ore di lavoro, abitudini e routine cicliche, eventi ed impegni personali.</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <button type="button" onclick="openNewPlanModal()" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-primary text-primaryForeground hover:bg-primary/90 h-10 px-4 py-2 gap-2 shadow-sm">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                Nuovo Obiettivo / Impegno
+            </button>
+        </div>
+    </div>
+
+    <!-- Month KPI Summary Cards -->
+    <div class="grid gap-4 grid-cols-2 md:grid-cols-4">
+        <div class="rounded-xl border border-border bg-card p-4">
+            <div class="flex items-center justify-between text-mutedForeground mb-1">
+                <span class="text-xs uppercase tracking-wider font-medium">Ore Tracciate</span>
+                <i data-lucide="clock" class="w-4 h-4 text-blue-400"></i>
+            </div>
+            <div class="text-2xl font-bold text-foreground" id="kpiTrackedMonth" th:text="${calendar.formattedTrackedTimeMonth}">0h 0m</div>
+            <p class="text-[0.7rem] text-mutedForeground mt-1">Sessioni registrate nel mese</p>
+        </div>
+
+        <div class="rounded-xl border border-border bg-card p-4">
+            <div class="flex items-center justify-between text-mutedForeground mb-1">
+                <span class="text-xs uppercase tracking-wider font-medium">Target Lavoro</span>
+                <i data-lucide="target" class="w-4 h-4 text-amber-400"></i>
+            </div>
+            <div class="text-2xl font-bold text-foreground" id="kpiTargetMonth" th:text="${calendar.formattedTargetTimeMonth}">0h 0m</div>
+            <p class="text-[0.7rem] text-mutedForeground mt-1">Obiettivi ore pianificati</p>
+        </div>
+
+        <div class="rounded-xl border border-border bg-card p-4">
+            <div class="flex items-center justify-between text-mutedForeground mb-1">
+                <span class="text-xs uppercase tracking-wider font-medium">Routine Completate</span>
+                <i data-lucide="repeat" class="w-4 h-4 text-emerald-400"></i>
+            </div>
+            <div class="text-2xl font-bold text-foreground" id="kpiRoutinesMonth" th:text="${calendar.totalRoutinesCompletedMonth}">0</div>
+            <p class="text-[0.7rem] text-mutedForeground mt-1">Abitudini svolte con successo</p>
+        </div>
+
+        <div class="rounded-xl border border-border bg-card p-4">
+            <div class="flex items-center justify-between text-mutedForeground mb-1">
+                <span class="text-xs uppercase tracking-wider font-medium">Impegni Svolti</span>
+                <i data-lucide="calendar-check" class="w-4 h-4 text-purple-400"></i>
+            </div>
+            <div class="text-2xl font-bold text-foreground" id="kpiEventsMonth" th:text="${calendar.totalEventsCompletedMonth}">0</div>
+            <p class="text-[0.7rem] text-mutedForeground mt-1">Eventi e task completati</p>
+        </div>
+    </div>
+
+    <!-- Calendar Controls Bar -->
+    <div class="rounded-xl border border-border bg-card p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        
+        <!-- Navigation Buttons & Month Title -->
+        <div class="flex items-center gap-3">
+            <button type="button" onclick="prevMonth()" title="Mese precedente" class="inline-flex items-center justify-center rounded-lg border border-border bg-background hover:bg-accent h-9 w-9 text-mutedForeground hover:text-foreground transition-colors">
+                <i data-lucide="chevron-left" class="w-4 h-4"></i>
+            </button>
+            <h2 id="calendarMonthTitle" class="text-xl font-bold tracking-tight min-w-[200px] text-foreground" th:text="${calendar.monthName}">Novembre 2026</h2>
+            <button type="button" onclick="nextMonth()" title="Mese successivo" class="inline-flex items-center justify-center rounded-lg border border-border bg-background hover:bg-accent h-9 w-9 text-mutedForeground hover:text-foreground transition-colors">
+                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            </button>
+            <button type="button" onclick="goToToday()" class="px-3 py-1.5 rounded-lg border border-border text-xs font-medium hover:bg-accent text-mutedForeground hover:text-foreground transition-colors">
+                Oggi
+            </button>
+        </div>
+
+        <!-- Legend and View Switcher (Mese / Settimana) -->
+        <div class="flex flex-wrap items-center gap-3 text-xs">
+            <div class="hidden sm:flex items-center gap-3 text-mutedForeground border-r border-border pr-3">
+                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span> Lavoro / Target</span>
+                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Routine</span>
+                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span> Impegni / Eventi</span>
+            </div>
+
+            <div class="inline-flex rounded-lg border border-border p-0.5 bg-accent/30">
+                <button type="button" id="viewBtnMonth" onclick="switchCalendarView('month')" class="px-3 py-1.5 rounded-md text-xs font-semibold bg-primary text-primaryForeground transition-all">
+                    Mese
+                </button>
+                <button type="button" id="viewBtnWeek" onclick="switchCalendarView('week')" class="px-3 py-1.5 rounded-md text-xs font-medium text-mutedForeground hover:text-foreground transition-all">
+                    Settimana
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW 1: MONTH GRID VIEW -->
+    <div id="calendarMonthWrapper" class="rounded-xl border border-border bg-card overflow-hidden">
+        <!-- Weekday Headers -->
+        <div class="grid grid-cols-7 border-b border-border bg-accent/40 text-center text-xs font-semibold uppercase tracking-wider text-mutedForeground py-2.5">
+            <div>Lun</div>
+            <div>Mar</div>
+            <div>Mer</div>
+            <div>Gio</div>
+            <div>Ven</div>
+            <div>Sab</div>
+            <div>Dom</div>
+        </div>
+
+        <!-- Month Days Grid -->
+        <div id="calendarMonthGrid" class="grid grid-cols-7 divide-x divide-y divide-border bg-background">
+            <!-- Dynamically populated via JavaScript -->
+        </div>
+    </div>
+
+    <!-- VIEW 2: WEEK VIEW (7 DETAILED DAILY COLUMNS) -->
+    <div id="calendarWeekWrapper" class="hidden rounded-xl border border-border bg-card overflow-hidden">
+        <div id="calendarWeekGrid" class="grid grid-cols-1 md:grid-cols-7 divide-y md:divide-y-0 md:divide-x divide-border bg-background">
+            <!-- Dynamically populated via JavaScript -->
+        </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- MODAL 1: NUOVO OBIETTIVO / IMPEGNO GIORNALIERO           -->
+    <!-- ======================================================== -->
+    <div id="newPlanItemModal" class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-card text-cardForeground border border-border shadow-2xl rounded-2xl max-w-lg w-full p-6 text-left">
+            <div class="flex items-center justify-between pb-3 border-b border-border mb-4">
+                <div>
+                    <h2 class="text-xl font-bold tracking-tight text-foreground">Nuovo Impegno o Obiettivo</h2>
+                    <p class="text-xs text-mutedForeground mt-0.5">Pianifica una sessione di lavoro, un evento o un task per la giornata.</p>
+                </div>
+                <button type="button" onclick="closeNewPlanModal()" class="text-mutedForeground hover:text-foreground">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form id="newPlanItemForm" th:action="@{/calendar/items}" method="post" class="space-y-4">
+                <input type="hidden" name="returnView" id="newPlanReturnView" value="month" />
+
+                <!-- Date -->
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-mutedForeground mb-1.5">Data</label>
+                    <input type="date" name="date" id="newPlanDateInput" required class="w-full h-10 rounded-md border border-border bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+                </div>
+
+                <!-- Type Selector -->
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-mutedForeground mb-1.5">Tipo di Pianificazione</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <label class="flex flex-col items-center justify-center p-2.5 rounded-lg border border-border bg-background hover:bg-accent/40 cursor-pointer transition-colors text-center">
+                            <input type="radio" name="itemType" value="WORK_TARGET" onchange="togglePlanTypeFields('WORK_TARGET')" checked class="sr-only plan-type-radio">
+                            <i data-lucide="clock" class="w-4 h-4 mb-1 text-blue-400"></i>
+                            <span class="text-xs font-medium">Obiettivo Ore</span>
+                        </label>
+                        <label class="flex flex-col items-center justify-center p-2.5 rounded-lg border border-border bg-background hover:bg-accent/40 cursor-pointer transition-colors text-center">
+                            <input type="radio" name="itemType" value="EVENT" onchange="togglePlanTypeFields('EVENT')" class="sr-only plan-type-radio">
+                            <i data-lucide="calendar" class="w-4 h-4 mb-1 text-purple-400"></i>
+                            <span class="text-xs font-medium">Evento</span>
+                        </label>
+                        <label class="flex flex-col items-center justify-center p-2.5 rounded-lg border border-border bg-background hover:bg-accent/40 cursor-pointer transition-colors text-center">
+                            <input type="radio" name="itemType" value="PERSONAL" onchange="togglePlanTypeFields('PERSONAL')" class="sr-only plan-type-radio">
+                            <i data-lucide="check-square" class="w-4 h-4 mb-1 text-emerald-400"></i>
+                            <span class="text-xs font-medium">Personale</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Title -->
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-mutedForeground mb-1.5">Titolo</label>
+                    <input type="text" name="title" id="newPlanTitleInput" required placeholder="Es: 6 ore di lavoro, Guardare il torneo, Dentista..." class="w-full h-10 rounded-md border border-border bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+                </div>
+
+                <!-- Conditional: Work Target Hours & Activity -->
+                <div id="workTargetFields" class="space-y-4 p-3 rounded-lg border border-blue-500/20 bg-blue-500/5">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-mutedForeground mb-1.5">Ore Previste</label>
+                            <input type="number" step="0.5" min="0.5" max="24" name="plannedHours" id="newPlanHoursInput" value="4" class="w-full h-10 rounded-md border border-border bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-mutedForeground mb-1.5">Attività (Opzionale)</label>
+                            <select name="activityId" class="w-full h-10 rounded-md border border-border bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                                <option value="">Generale / Tutte</option>
+                                <option th:each="act : ${userActivities}" th:value="${act.id}" th:text="${act.name}"></option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notes -->
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-mutedForeground mb-1.5">Note Aggiuntive</label>
+                    <textarea name="notes" rows="2" placeholder="Dettagli, orari specifici o promemoria..." class="w-full rounded-md border border-border bg-background p-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none"></textarea>
+                </div>
+
+                <!-- Buttons -->
+                <div class="pt-2 flex justify-end gap-3">
+                    <button type="button" onclick="closeNewPlanModal()" class="rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-accent text-mutedForeground hover:text-foreground">
+                        Annulla
+                    </button>
+                    <button type="submit" class="inline-flex items-center justify-center rounded-md bg-primary text-primaryForeground hover:bg-primary/90 px-4 py-2 text-sm font-medium shadow-sm">
+                        Salva nel Calendario
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- MODAL 2: AGENDA DETTAGLIATA GIORNATA                     -->
+    <!-- ======================================================== -->
+    <div id="dayDetailModal" class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-card text-cardForeground border border-border shadow-2xl rounded-2xl max-w-xl w-full p-6 text-left max-h-[90vh] flex flex-col">
+            
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between pb-3 border-b border-border mb-4">
+                <div>
+                    <h2 id="dayDetailTitle" class="text-xl font-bold tracking-tight text-foreground">12 Novembre 2026</h2>
+                    <p id="dayDetailSubtitle" class="text-xs text-mutedForeground mt-0.5">Panoramica completa e gestione attività della giornata</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="button" id="dayDetailAddBtn" onclick="openNewPlanModalForCurrentDay()" class="inline-flex items-center justify-center rounded-md text-xs font-medium bg-primary text-primaryForeground hover:bg-primary/90 h-8 px-2.5 gap-1 shadow-sm">
+                        <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                        <span>Aggiungi</span>
+                    </button>
+                    <button type="button" onclick="closeDayDetailModal()" class="text-mutedForeground hover:text-foreground">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Content Area (Scrollable) -->
+            <div class="space-y-6 overflow-y-auto flex-1 pr-1">
+                
+                <!-- SECTION 1: WORK & STUDY TARGETS + TRACKED SESSIONS -->
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-blue-400 flex items-center gap-1.5">
+                            <i data-lucide="clock" class="w-3.5 h-3.5"></i>
+                            <span>Lavoro & Studio</span>
+                        </h3>
+                        <span id="dayWorkSummaryBadge" class="text-xs font-medium text-mutedForeground font-mono">0h / 0h (0%)</span>
+                    </div>
+
+                    <!-- Work Progress Bar -->
+                    <div class="w-full bg-accent/40 rounded-full h-2 overflow-hidden">
+                        <div id="dayWorkProgressBar" class="bg-blue-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+
+                    <!-- Work Targets & Tracked Sessions List -->
+                    <div id="dayWorkContainer" class="space-y-2">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- SECTION 2: ROUTINES -->
+                <div class="space-y-3 pt-3 border-t border-border">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+                            <i data-lucide="repeat" class="w-3.5 h-3.5"></i>
+                            <span>Routine & Abitudini Cicliche</span>
+                        </h3>
+                        <span id="dayRoutineSummaryBadge" class="text-xs font-medium text-mutedForeground">0 routine</span>
+                    </div>
+
+                    <div id="dayRoutinesContainer" class="space-y-2">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- SECTION 3: PERSONAL EVENTS & COMMITMENTS -->
+                <div class="space-y-3 pt-3 border-t border-border">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-purple-400 flex items-center gap-1.5">
+                            <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+                            <span>Impegni ed Eventi Personali</span>
+                        </h3>
+                        <span id="dayEventsSummaryBadge" class="text-xs font-medium text-mutedForeground">0 impegni</span>
+                    </div>
+
+                    <div id="dayEventsContainer" class="space-y-2">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="pt-4 border-t border-border mt-4 flex justify-end">
+                <button type="button" onclick="closeDayDetailModal()" class="inline-flex items-center justify-center rounded-md text-sm font-medium border border-border bg-accent/40 hover:bg-accent text-accentForeground h-9 px-4">
+                    Chiudi
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        const csrfToken = /*[[${_csrf.token}]]*/ '';
+        let initialData = /*[[${calendar}]]*/ null;
+        let currentYear = initialData ? initialData.year : new Date().getFullYear();
+        let currentMonth = initialData ? initialData.month : (new Date().getMonth() + 1);
+        let calendarData = initialData;
+        let activeView = /*[[${selectedView}]]*/ 'month';
+        let selectedDayDateStr = null;
+
+        // View toggle (month / week)
+        function switchCalendarView(view) {
+            activeView = view;
+            const btnM = document.getElementById('viewBtnMonth');
+            const btnW = document.getElementById('viewBtnWeek');
+            const wrapM = document.getElementById('calendarMonthWrapper');
+            const wrapW = document.getElementById('calendarWeekWrapper');
+            document.getElementById('newPlanReturnView').value = view;
+
+            if (view === 'month') {
+                btnM.className = 'px-3 py-1.5 rounded-md text-xs font-semibold bg-primary text-primaryForeground transition-all';
+                btnW.className = 'px-3 py-1.5 rounded-md text-xs font-medium text-mutedForeground hover:text-foreground transition-all';
+                wrapM.classList.remove('hidden');
+                wrapW.classList.add('hidden');
+            } else {
+                btnW.className = 'px-3 py-1.5 rounded-md text-xs font-semibold bg-primary text-primaryForeground transition-all';
+                btnM.className = 'px-3 py-1.5 rounded-md text-xs font-medium text-mutedForeground hover:text-foreground transition-all';
+                wrapM.classList.add('hidden');
+                wrapW.classList.remove('hidden');
+            }
+            renderCalendar();
+        }
+
+        // Navigation
+        async function loadCalendar(year, month) {
+            try {
+                const resp = await fetch(`/calendar/api/data?year=${year}&month=${month}`);
+                if (resp.ok) {
+                    calendarData = await resp.json();
+                    currentYear = calendarData.year;
+                    currentMonth = calendarData.month;
+                    renderCalendar();
+                }
+            } catch (err) {
+                console.error('Errore caricamento calendario:', err);
+            }
+        }
+
+        function prevMonth() {
+            let y = currentYear;
+            let m = currentMonth - 1;
+            if (m < 1) { m = 12; y--; }
+            loadCalendar(y, m);
+        }
+
+        function nextMonth() {
+            let y = currentYear;
+            let m = currentMonth + 1;
+            if (m > 12) { m = 1; y++; }
+            loadCalendar(y, m);
+        }
+
+        function goToToday() {
+            const now = new Date();
+            loadCalendar(now.getFullYear(), now.getMonth() + 1);
+        }
+
+        // Render Calendar
+        function renderCalendar() {
+            if (!calendarData) return;
+
+            // Update Header & KPIs
+            document.getElementById('calendarMonthTitle').textContent = calendarData.monthName;
+            document.getElementById('kpiTrackedMonth').textContent = calendarData.formattedTrackedTimeMonth;
+            document.getElementById('kpiTargetMonth').textContent = calendarData.formattedTargetTimeMonth;
+            document.getElementById('kpiRoutinesMonth').textContent = calendarData.totalRoutinesCompletedMonth;
+            document.getElementById('kpiEventsMonth').textContent = calendarData.totalEventsCompletedMonth;
+
+            if (activeView === 'month') {
+                renderMonthGrid();
+            } else {
+                renderWeekGrid();
+            }
+            lucide.createIcons();
+        }
+
+        // Render Month Grid
+        function renderMonthGrid() {
+            const grid = document.getElementById('calendarMonthGrid');
+            grid.innerHTML = '';
+
+            const days = calendarData.days || [];
+            days.forEach(day => {
+                const cell = document.createElement('div');
+                cell.className = `min-h-[120px] p-2 flex flex-col transition-colors cursor-pointer hover:bg-accent/25 relative ${
+                    !day.isCurrentMonth ? 'opacity-40 bg-zinc-950/40 text-mutedForeground' : 'bg-card'
+                } ${day.isToday ? 'border-2 border-emerald-500/80 bg-emerald-500/5' : ''}`;
+
+                cell.setAttribute('onclick', `openDayDetail('${day.dateString}')`);
+
+                // Header of day
+                let header = `
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span class="text-xs font-semibold ${day.isToday ? 'w-5 h-5 rounded-full bg-emerald-500 text-black flex items-center justify-center font-bold' : ''}">
+                            ${day.dayOfMonth}
+                        </span>
+                        <div class="flex items-center gap-1">
+                            ${day.totalTrackedMinutes > 0 ? `<span class="text-[0.62rem] text-blue-400 font-mono font-medium">${day.formattedTrackedTime}</span>` : ''}
+                        </div>
+                    </div>
+                `;
+
+                // Content chips
+                let chips = '<div class="space-y-1 overflow-hidden flex-1">';
+
+                // 1. Work target pill
+                if (day.totalTargetMinutes > 0 || day.totalTrackedMinutes > 0) {
+                    const pctText = day.totalTargetMinutes > 0 ? `${day.formattedTrackedTime} / ${day.formattedTargetTime}` : `${day.formattedTrackedTime}`;
+                    chips += `
+                        <div class="truncate text-[0.65rem] px-1.5 py-0.5 rounded border border-blue-500/20 bg-blue-500/10 text-blue-400 font-medium flex items-center gap-1" title="Lavoro / Studio: ${pctText}">
+                            <i data-lucide="clock" class="w-2.5 h-2.5 flex-shrink-0"></i>
+                            <span class="truncate">${pctText}</span>
+                        </div>
+                    `;
+                }
+
+                // 2. Routines summary
+                if (day.routines && day.routines.length > 0) {
+                    const done = day.completedRoutinesCount;
+                    const due = day.dueRoutinesCount;
+                    const total = day.routines.length;
+                    let badgeClass = done === total ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400' : 'border-amber-500/20 bg-amber-500/10 text-amber-400';
+                    chips += `
+                        <div class="truncate text-[0.65rem] px-1.5 py-0.5 rounded border ${badgeClass} font-medium flex items-center gap-1" title="${done}/${total} routine completate">
+                            <i data-lucide="repeat" class="w-2.5 h-2.5 flex-shrink-0"></i>
+                            <span class="truncate">${done}/${total} routine</span>
+                        </div>
+                    `;
+                }
+
+                // 3. Events chips (first 2)
+                if (day.events && day.events.length > 0) {
+                    day.events.slice(0, 2).forEach(ev => {
+                        const completedClass = ev.completed ? 'line-through opacity-60 text-mutedForeground' : 'text-purple-300';
+                        chips += `
+                            <div class="truncate text-[0.65rem] px-1.5 py-0.5 rounded border border-purple-500/20 bg-purple-500/10 ${completedClass} font-medium flex items-center gap-1" title="${ev.title}">
+                                <i data-lucide="calendar" class="w-2.5 h-2.5 flex-shrink-0"></i>
+                                <span class="truncate">${ev.title}</span>
+                            </div>
+                        `;
+                    });
+                    if (day.events.length > 2) {
+                        chips += `<div class="text-[0.6rem] text-mutedForeground font-medium pl-1">+${day.events.length - 2} altri</div>`;
+                    }
+                }
+
+                chips += '</div>';
+
+                cell.innerHTML = header + chips;
+                grid.appendChild(cell);
+            });
+        }
+
+        // Render Week View
+        function renderWeekGrid() {
+            const grid = document.getElementById('calendarWeekGrid');
+            grid.innerHTML = '';
+
+            const now = new Date();
+            const todayStr = now.toISOString().split('T')[0];
+
+            // Pick 7 days around today or the first 7 days
+            let weekDays = [];
+            const days = calendarData.days || [];
+            
+            // Find today's index or default to index 0
+            let todayIdx = days.findIndex(d => d.dateString === todayStr);
+            if (todayIdx === -1) {
+                // If today not in month, take Monday of middle week
+                todayIdx = Math.floor(days.length / 2);
+            }
+            // Align to Monday of that week
+            let mondayIdx = todayIdx - (todayIdx % 7);
+            if (mondayIdx < 0) mondayIdx = 0;
+            weekDays = days.slice(mondayIdx, mondayIdx + 7);
+
+            weekDays.forEach(day => {
+                const col = document.createElement('div');
+                col.className = `p-4 flex flex-col min-h-[380px] transition-colors ${
+                    day.isToday ? 'bg-emerald-500/5 border-emerald-500/30' : 'bg-card'
+                }`;
+
+                let header = `
+                    <div class="pb-3 border-b border-border mb-3 flex items-center justify-between">
+                        <div>
+                            <div class="text-xs text-mutedForeground font-medium">${day.dayOfWeekName}</div>
+                            <div class="text-lg font-bold ${day.isToday ? 'text-emerald-400' : 'text-foreground'}">${day.dayOfMonth}</div>
+                        </div>
+                        <button type="button" onclick="openNewPlanModalForDate('${day.dateString}')" title="Aggiungi impegno per questa data" class="w-7 h-7 rounded-md border border-border flex items-center justify-center text-mutedForeground hover:text-foreground hover:bg-accent transition-colors">
+                            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
+                `;
+
+                // Column body sections
+                let body = '<div class="space-y-4 flex-1 text-xs cursor-pointer" onclick="openDayDetail(\'' + day.dateString + '\')">';
+
+                // 1. Work progress bar
+                let workSection = `
+                    <div class="p-2.5 rounded-lg border border-blue-500/20 bg-blue-500/5 space-y-1.5">
+                        <div class="flex items-center justify-between text-[0.7rem] font-semibold text-blue-400">
+                            <span>Lavoro</span>
+                            <span>${day.formattedTrackedTime} / ${day.formattedTargetTime}</span>
+                        </div>
+                        <div class="w-full bg-accent/40 rounded-full h-1.5 overflow-hidden">
+                            <div class="bg-blue-500 h-1.5 rounded-full" style="width: ${day.progressPercent}%"></div>
+                        </div>
+                    </div>
+                `;
+                body += workSection;
+
+                // 2. Routines list preview
+                let routinesSection = '<div class="space-y-1.5">';
+                routinesSection += '<div class="text-[0.65rem] font-bold uppercase tracking-wider text-mutedForeground">Routine (' + day.routines.length + ')</div>';
+                if (day.routines.length === 0) {
+                    routinesSection += '<div class="text-[0.65rem] text-mutedForeground/60 italic">Nessuna routine</div>';
+                } else {
+                    day.routines.slice(0, 3).forEach(r => {
+                        let isDone = r.status === 'COMPLETED';
+                        let icon = isDone ? 'check' : 'circle';
+                        let col = isDone ? 'text-emerald-400' : 'text-amber-400';
+                        routinesSection += `
+                            <div class="p-1.5 rounded bg-background border border-border/70 flex items-center gap-1.5 truncate">
+                                <i data-lucide="${icon}" class="w-3 h-3 ${col} flex-shrink-0"></i>
+                                <span class="truncate ${isDone ? 'line-through opacity-70' : ''}">${r.name}</span>
+                            </div>
+                        `;
+                    });
+                    if (day.routines.length > 3) {
+                        routinesSection += `<div class="text-[0.6rem] text-mutedForeground pl-1">+${day.routines.length - 3} altre</div>`;
+                    }
+                }
+                routinesSection += '</div>';
+                body += routinesSection;
+
+                // 3. Events list preview
+                let eventsSection = '<div class="space-y-1.5">';
+                eventsSection += '<div class="text-[0.65rem] font-bold uppercase tracking-wider text-mutedForeground">Impegni (' + day.events.length + ')</div>';
+                if (day.events.length === 0) {
+                    eventsSection += '<div class="text-[0.65rem] text-mutedForeground/60 italic">Nessun impegno</div>';
+                } else {
+                    day.events.slice(0, 3).forEach(ev => {
+                        let isDone = ev.completed;
+                        eventsSection += `
+                            <div class="p-1.5 rounded bg-background border border-border/70 flex items-center gap-1.5 truncate">
+                                <i data-lucide="${isDone ? 'check' : 'calendar'}" class="w-3 h-3 text-purple-400 flex-shrink-0"></i>
+                                <span class="truncate ${isDone ? 'line-through opacity-60' : ''}">${ev.title}</span>
+                            </div>
+                        `;
+                    });
+                    if (day.events.length > 3) {
+                        eventsSection += `<div class="text-[0.6rem] text-mutedForeground pl-1">+${day.events.length - 3} altri</div>`;
+                    }
+                }
+                eventsSection += '</div>';
+                body += eventsSection;
+
+                body += '</div>';
+
+                col.innerHTML = header + body;
+                grid.appendChild(col);
+            });
+        }
+
+        // ==========================================
+        // DAY DETAIL MODAL LOGIC
+        // ==========================================
+        function openDayDetail(dateStr) {
+            if (!calendarData || !calendarData.daysByDate) return;
+            const day = calendarData.daysByDate[dateStr];
+            if (!day) return;
+
+            selectedDayDateStr = dateStr;
+
+            const dateObj = new Date(dateStr + 'T00:00:00');
+            const formattedDate = dateObj.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+            const capitalizedDate = formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1);
+
+            document.getElementById('dayDetailTitle').textContent = capitalizedDate;
+            document.getElementById('dayDetailSubtitle').textContent = day.isToday ? 'Oggi • Visione unificata' : 'Visione unificata della giornata';
+
+            // 1. Work Section
+            const workBadge = document.getElementById('dayWorkSummaryBadge');
+            workBadge.textContent = `${day.formattedTrackedTime} / ${day.formattedTargetTime} (${day.progressPercent}%)`;
+            document.getElementById('dayWorkProgressBar').style.width = `${day.progressPercent}%`;
+
+            const workCont = document.getElementById('dayWorkContainer');
+            workCont.innerHTML = '';
+
+            // Work Targets
+            if (day.workTargets && day.workTargets.length > 0) {
+                day.workTargets.forEach(wt => {
+                    const row = document.createElement('div');
+                    row.className = 'p-3 rounded-lg border border-border bg-background flex items-center justify-between gap-2';
+                    row.innerHTML = `
+                        <div class="space-y-0.5">
+                            <div class="font-medium text-foreground text-sm flex items-center gap-2">
+                                <i data-lucide="target" class="w-4 h-4 text-blue-400"></i>
+                                <span>${wt.title}</span>
+                                ${wt.activityName ? `<span class="text-[0.65rem] px-2 py-0.5 rounded-full bg-accent text-accentForeground font-medium">${wt.activityName}</span>` : ''}
+                            </div>
+                            ${wt.notes ? `<p class="text-xs text-mutedForeground">${wt.notes}</p>` : ''}
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="font-mono text-xs font-semibold text-blue-400">${wt.formattedPlannedTime}</span>
+                            <button type="button" onclick="deletePlanItem(${wt.id})" class="text-mutedForeground hover:text-destructive p-1 rounded transition-colors" title="Elimina">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    `;
+                    workCont.appendChild(row);
+                });
+            }
+
+            // Tracked Sessions on this day
+            if (day.trackedSessions && day.trackedSessions.length > 0) {
+                day.trackedSessions.forEach(s => {
+                    const row = document.createElement('div');
+                    row.className = 'p-2.5 rounded-lg border border-border/60 bg-accent/15 flex items-center justify-between text-xs';
+                    row.innerHTML = `
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full" style="background-color: ${s.categoryColor}"></span>
+                            <span class="font-medium text-foreground">${s.activityName}</span>
+                            <span class="text-[0.65rem] text-mutedForeground">(${new Date(s.startTime).toLocaleTimeString('it-IT', {hour: '2-digit', minute:'2-digit'})})</span>
+                        </div>
+                        <span class="font-mono font-semibold text-emerald-400">${s.formattedDuration}</span>
+                    `;
+                    workCont.appendChild(row);
+                });
+            }
+
+            if ((!day.workTargets || day.workTargets.length === 0) && (!day.trackedSessions || day.trackedSessions.length === 0)) {
+                workCont.innerHTML = '<div class="text-xs text-mutedForeground/60 italic py-2">Nessun obiettivo o sessione registrata per oggi.</div>';
+            }
+
+            // 2. Routines Section
+            const routineBadge = document.getElementById('dayRoutineSummaryBadge');
+            routineBadge.textContent = `${day.completedRoutinesCount}/${day.routines.length} completate`;
+
+            const routinesCont = document.getElementById('dayRoutinesContainer');
+            routinesCont.innerHTML = '';
+
+            if (!day.routines || day.routines.length === 0) {
+                routinesCont.innerHTML = '<div class="text-xs text-mutedForeground/60 italic py-2">Nessuna routine programmata per oggi.</div>';
+            } else {
+                day.routines.forEach(r => {
+                    const row = document.createElement('div');
+                    row.className = 'p-3 rounded-lg border border-border bg-background flex items-center justify-between gap-3';
+
+                    let badge = '';
+                    let action = '';
+
+                    if (r.status === 'COMPLETED') {
+                        badge = '<span class="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 text-[0.65rem] font-semibold"><i data-lucide="check" class="w-3 h-3"></i> Fatto</span>';
+                    } else if (r.status === 'DUE_TODAY') {
+                        badge = '<span class="inline-flex items-center gap-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 text-[0.65rem] font-semibold"><i data-lucide="clock" class="w-3 h-3"></i> Da fare</span>';
+                        action = `<button type="button" onclick="quickCompleteRoutine(${r.routineId})" class="inline-flex items-center justify-center rounded-md text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-500 h-8 px-2.5 gap-1 transition-colors"><i data-lucide="check" class="w-3.5 h-3.5"></i><span>Completa</span></button>`;
+                    } else if (r.status === 'OVERDUE') {
+                        badge = '<span class="inline-flex items-center gap-1 rounded-full bg-red-500/10 text-red-400 border border-red-500/20 px-2 py-0.5 text-[0.65rem] font-semibold"><i data-lucide="alert-circle" class="w-3 h-3"></i> In ritardo</span>';
+                        action = `<button type="button" onclick="quickCompleteRoutine(${r.routineId})" class="inline-flex items-center justify-center rounded-md text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-500 h-8 px-2.5 gap-1 transition-colors"><i data-lucide="check" class="w-3.5 h-3.5"></i><span>Completa</span></button>`;
+                    } else {
+                        badge = '<span class="inline-flex items-center gap-1 rounded-full bg-zinc-800 text-zinc-300 border border-zinc-700 px-2 py-0.5 text-[0.65rem] font-semibold"><i data-lucide="calendar" class="w-3 h-3"></i> Futura</span>';
+                        action = `<button type="button" onclick="quickCompleteRoutine(${r.routineId})" title="Completa in anticipo oggi" class="inline-flex items-center justify-center rounded-md text-xs font-medium border border-border hover:bg-accent text-mutedForeground hover:text-foreground h-8 px-2.5 gap-1 transition-colors"><i data-lucide="fast-forward" class="w-3 h-3 text-emerald-400"></i><span>Anticipa</span></button>`;
+                    }
+
+                    row.innerHTML = `
+                        <div class="space-y-1">
+                            <div class="flex items-center gap-2">
+                                <span class="font-medium text-foreground text-sm">${r.name}</span>
+                                <span class="text-[0.65rem] px-2 py-0.5 rounded-full bg-accent text-accentForeground font-medium">${r.sessionGroup}</span>
+                                ${badge}
+                            </div>
+                            <div class="text-xs text-mutedForeground flex items-center gap-2">
+                                <span>~${r.estimatedMinutes} min</span>
+                                <span>•</span>
+                                <span>${r.recurrenceDescription}</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            ${action}
+                        </div>
+                    `;
+                    routinesCont.appendChild(row);
+                });
+            }
+
+            // 3. Events Section
+            const eventsBadge = document.getElementById('dayEventsSummaryBadge');
+            eventsBadge.textContent = `${day.completedEventsCount}/${day.events.length} svolti`;
+
+            const eventsCont = document.getElementById('dayEventsContainer');
+            eventsCont.innerHTML = '';
+
+            if (!day.events || day.events.length === 0) {
+                eventsCont.innerHTML = '<div class="text-xs text-mutedForeground/60 italic py-2">Nessun evento o impegno personale per oggi.</div>';
+            } else {
+                day.events.forEach(ev => {
+                    const row = document.createElement('div');
+                    row.className = 'p-3 rounded-lg border border-border bg-background flex items-center justify-between gap-3';
+                    row.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <input type="checkbox" ${ev.completed ? 'checked' : ''} onchange="togglePlanItem(${ev.id})" class="rounded border-zinc-700 bg-background text-purple-600 focus:ring-purple-500 w-4 h-4 cursor-pointer">
+                            <div>
+                                <span class="font-medium text-sm ${ev.completed ? 'line-through text-mutedForeground' : 'text-foreground'}">${ev.title}</span>
+                                ${ev.notes ? `<p class="text-xs text-mutedForeground mt-0.5">${ev.notes}</p>` : ''}
+                            </div>
+                        </div>
+                        <button type="button" onclick="deletePlanItem(${ev.id})" class="text-mutedForeground hover:text-destructive p-1 rounded transition-colors" title="Elimina">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    `;
+                    eventsCont.appendChild(row);
+                });
+            }
+
+            document.getElementById('dayDetailModal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeDayDetailModal() {
+            document.getElementById('dayDetailModal').classList.add('hidden');
+        }
+
+        // ==========================================
+        // NEW PLAN ITEM MODAL LOGIC
+        // ==========================================
+        function openNewPlanModal() {
+            openNewPlanModalForDate(new Date().toISOString().split('T')[0]);
+        }
+
+        function openNewPlanModalForDate(dateStr) {
+            document.getElementById('newPlanDateInput').value = dateStr;
+            document.getElementById('newPlanTitleInput').value = '';
+            document.getElementById('newPlanHoursInput').value = '4';
+            togglePlanTypeFields('WORK_TARGET');
+            document.getElementById('newPlanItemModal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function openNewPlanModalForCurrentDay() {
+            if (selectedDayDateStr) {
+                openNewPlanModalForDate(selectedDayDateStr);
+            } else {
+                openNewPlanModal();
+            }
+        }
+
+        function closeNewPlanModal() {
+            document.getElementById('newPlanItemModal').classList.add('hidden');
+        }
+
+        function togglePlanTypeFields(type) {
+            const workFields = document.getElementById('workTargetFields');
+            if (type === 'WORK_TARGET') {
+                workFields.classList.remove('hidden');
+            } else {
+                workFields.classList.add('hidden');
+            }
+        }
+
+        // ==========================================
+        // AJAX ACTIONS: TOGGLE, DELETE, COMPLETE
+        // ==========================================
+        async function togglePlanItem(id) {
+            try {
+                const resp = await fetch(`/calendar/items/${id}/toggle`, {
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': csrfToken }
+                });
+                if (resp.ok) {
+                    await loadCalendar(currentYear, currentMonth);
+                    if (selectedDayDateStr) openDayDetail(selectedDayDateStr);
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function deletePlanItem(id) {
+            if (!confirm('Sei sicuro di voler eliminare questo elemento?')) return;
+            try {
+                const resp = await fetch(`/calendar/items/${id}/delete`, {
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': csrfToken }
+                });
+                if (resp.ok) {
+                    await loadCalendar(currentYear, currentMonth);
+                    if (selectedDayDateStr) openDayDetail(selectedDayDateStr);
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function quickCompleteRoutine(routineId) {
+            try {
+                const resp = await fetch(`/calendar/routines/${routineId}/complete`, {
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': csrfToken }
+                });
+                if (resp.ok) {
+                    await loadCalendar(currentYear, currentMonth);
+                    if (selectedDayDateStr) openDayDetail(selectedDayDateStr);
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        // Initialize on DOM load
+        document.addEventListener('DOMContentLoaded', function() {
+            renderCalendar();
+            lucide.createIcons();
+        });
+        /*]]>*/
+    </script>
+</div>
+</body>
+</html>

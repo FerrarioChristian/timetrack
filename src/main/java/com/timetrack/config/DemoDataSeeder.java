@@ -40,6 +40,7 @@ public class DemoDataSeeder implements CommandLineRunner {
     private final PasswordEncoder passwordEncoder;
     private final RoutineRepository routineRepository;
     private final RoutineCompletionRepository routineCompletionRepository;
+    private final com.timetrack.calendar.DailyPlanItemRepository planItemRepository;
 
     public DemoDataSeeder(UserRepository userRepository,
                           CategoryRepository categoryRepository,
@@ -48,7 +49,8 @@ public class DemoDataSeeder implements CommandLineRunner {
                           GoalRepository goalRepository,
                           PasswordEncoder passwordEncoder,
                           RoutineRepository routineRepository,
-                          RoutineCompletionRepository routineCompletionRepository) {
+                          RoutineCompletionRepository routineCompletionRepository,
+                          com.timetrack.calendar.DailyPlanItemRepository planItemRepository) {
         this.userRepository = userRepository;
         this.categoryRepository = categoryRepository;
         this.activityRepository = activityRepository;
@@ -57,6 +59,7 @@ public class DemoDataSeeder implements CommandLineRunner {
         this.passwordEncoder = passwordEncoder;
         this.routineRepository = routineRepository;
         this.routineCompletionRepository = routineCompletionRepository;
+        this.planItemRepository = planItemRepository;
     }
 
     @Override
@@ -68,6 +71,7 @@ public class DemoDataSeeder implements CommandLineRunner {
         }
         ensureFreshDemoSessions(demoUser);
         ensureDemoRoutines(demoUser);
+        ensureDemoPlanItems(demoUser);
     }
 
     @Transactional
@@ -360,5 +364,65 @@ public class DemoDataSeeder implements CommandLineRunner {
     private void seedHistoricalCompletion(Routine routine, LocalDateTime completedAt, int durationSeconds, boolean onTime) {
         RoutineCompletion completion = new RoutineCompletion(routine, completedAt, durationSeconds, onTime);
         routineCompletionRepository.save(completion);
+    }
+
+    private void ensureDemoPlanItems(User demoUser) {
+        if (planItemRepository.count() > 0) {
+            return;
+        }
+
+        java.time.LocalDate today = java.time.LocalDate.now();
+        java.time.LocalDate tomorrow = today.plusDays(1);
+
+        Activity actSpring = activityRepository.findByNameAndCreatedBy("Spring Boot Microservices", demoUser).orElse(null);
+
+        // Today: Work target + sync
+        planItemRepository.save(new com.timetrack.calendar.DailyPlanItem(
+                demoUser,
+                today,
+                "4 ore Sviluppo TimeTrack",
+                com.timetrack.calendar.DailyPlanType.WORK_TARGET,
+                240,
+                actSpring,
+                "Implementazione e testing del modulo Calendario"
+        ));
+        planItemRepository.save(new com.timetrack.calendar.DailyPlanItem(
+                demoUser,
+                today,
+                "Daily Sync con il team",
+                com.timetrack.calendar.DailyPlanType.EVENT,
+                null,
+                null,
+                "Allineamento priorità e sprint review"
+        ));
+
+        // Tomorrow: Exactly matching user prompt! "domani voglio fare 6 ore di lavoro, pulire il bagno e guardare il torneo"
+        planItemRepository.save(new com.timetrack.calendar.DailyPlanItem(
+                demoUser,
+                tomorrow,
+                "6 ore di lavoro",
+                com.timetrack.calendar.DailyPlanType.WORK_TARGET,
+                360,
+                actSpring,
+                "Sessione intensiva di sviluppo e ottimizzazione"
+        ));
+        planItemRepository.save(new com.timetrack.calendar.DailyPlanItem(
+                demoUser,
+                tomorrow,
+                "Guardare il torneo",
+                com.timetrack.calendar.DailyPlanType.EVENT,
+                null,
+                null,
+                "Diretta semifinale e finale serale"
+        ));
+        planItemRepository.save(new com.timetrack.calendar.DailyPlanItem(
+                demoUser,
+                tomorrow,
+                "Spesa settimanale",
+                com.timetrack.calendar.DailyPlanType.PERSONAL,
+                null,
+                null,
+                "Rifornimento ingredienti e prodotti per la casa"
+        ));
     }
 }

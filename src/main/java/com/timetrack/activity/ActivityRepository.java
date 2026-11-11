@@ -13,4 +13,6 @@ public interface ActivityRepository extends JpaRepository<Activity, Long> {
     List<Activity> findByCreatedBy_Username(String sessionUsername);
 
     boolean existsByIdAndCreatedBy_Username(Long activityId, String username);
+
+    java.util.Optional<Activity> findByNameAndCreatedBy(String name, com.timetrack.auth.User user);
 }

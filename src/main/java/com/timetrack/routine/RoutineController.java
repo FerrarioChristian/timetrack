@@ -56,11 +56,6 @@ public class RoutineController {
         RoutineHeatmapDto heatmapData = routineService.getHeatmapData(user, 26);
         model.addAttribute("heatmapData", heatmapData);
 
-        // Initial Calendar Month View (Current Month)
-        java.time.LocalDate now = java.time.LocalDate.now();
-        RoutineCalendarMonthDto calendarMonth = routineService.getCalendarMonth(now.getYear(), now.getMonthValue(), user);
-        model.addAttribute("calendarMonth", calendarMonth);
-
         // Chart data for completions per session
         model.addAttribute("chartLabels", stats.completionsPerSessionGroup().keySet());
         model.addAttribute("chartData", stats.completionsPerSessionGroup().values());
